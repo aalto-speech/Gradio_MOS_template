@@ -31,8 +31,8 @@ class MOSTest:
             },
             {
                 "type": 'attention',
-                'reference': 'attention_high.wav',
-                'target': 'attention_high.wav'
+                'reference': 'audios/attention_high.wav',
+                'target': 'audios/attention_high.wav'
             }
         ]
         self.current_page = 0
@@ -180,7 +180,7 @@ class MOSTest:
                 finish_message = """
                 # Test Completed!
                 ## Thank you for participating! Your results have been saved.
-                ## [Return to Prolific](https://app.prolific.co/submissions/complete)
+                ## Please return to Prolific via [this link](RETURN_URL) #! PUT_YOUR_RETURN_URL_HERE
                 """
             return (
                 update(value=finish_message),
