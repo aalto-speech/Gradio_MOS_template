@@ -1,9 +1,9 @@
 import gradio as gr
-import random
 import json
 import os
 from gradio import update
-from urllib.parse import parse_qs
+
+from utils import is_valid_email
 
 class MOSTest:
     def __init__(self):
@@ -308,7 +308,7 @@ class MOSTest:
 
             def start_test(email_input, pid_input):
                 # Modified validation to only require email if no PID is provided
-                if not email_input and not pid_input:
+                if not is_valid_email(email_input) and not pid_input:
                     return (
                         None,
                         update(value="Please provide an Email address", visible=True),
