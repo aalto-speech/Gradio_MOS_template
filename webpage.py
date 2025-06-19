@@ -186,6 +186,7 @@ class MOSTest:
                 # Test Completed!
                 ## Thank you for participating! Please close this tab.
                 """
+                submit_score = update(visible=False)
             else:
                 finish_message = """
                 # Test Completed!
