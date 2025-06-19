@@ -132,14 +132,24 @@ class MOSTest:
         return update(minimum=minimum, maximum=maximum, step=1, value=default)
 
     def run_test(self, user_id, score, audio_played):
+
+        # Set defult update values
+        instructions = update()
+        progress = update()
+        ref_audio = update(value=None)
+        tar_audio = update(value=None)
+        slider_update = update(visible=False)
+        submit_score = update(visible=True)
+        redirect = update()  # No redirect by default
+
         # Check that we have a valid user_id and are within bounds
         if not user_id or self.current_page >= self.total_pages:
-            return update(), update(), update(value=None), update(value=None), update()
+            return instructions, progress, ref_audio, tar_audio, submit_score, redirect
             
         # Check that the target audio was played
         if audio_played is None:
             progress = f"Progress: {self.current_page}/{self.total_pages} ({int(self.current_page/self.total_pages*100)}%)"
-            return update(), progress, update(value=None), update(value=None), update()
+            return instructions, progress, ref_audio, tar_audio, submit_score, redirect
         
         test_page = self.test_cases[self.current_page]
         # Store result from the current page, including URL parameters
@@ -176,18 +186,27 @@ class MOSTest:
                 # Test Completed!
                 ## Thank you for participating! Please close this tab.
                 """
+                submit_score = update(visible=False)
             else:
                 finish_message = """
                 # Test Completed!
                 ## Thank you for participating! Your results have been saved.
-                ## Please return to Prolific via [this link](RETURN_URL) #! PUT_YOUR_RETURN_URL_HERE
                 """
+                redirect = update(visible=True)
+                submit_score = update(visible=False)
+
+            instructions = update(value=finish_message)
+            ref_audio = update(value=None, visible=False)
+            tar_audio = update(value=None, visible=False)
+            slider_update = update(visible=False)
             return (
-                update(value=finish_message),
+                instructions,
                 progress,
-                update(value=None),
-                update(value=None),
-                update()
+                ref_audio,
+                tar_audio,
+                slider_update,
+                submit_score,
+                redirect
             )
 
         next_page = self.test_cases[self.current_page]
@@ -195,12 +214,15 @@ class MOSTest:
         ref_audio = self.get_audio_path(next_page["reference"])
         tar_audio = self.get_audio_path(next_page["target"])
         slider_update = self.get_slider_update(next_page["type"])
+        redirect = update()  # No redirect needed yet
         return (
             update(value=instructions),
             progress,
             update(value=ref_audio),
             update(value=tar_audio),
-            slider_update
+            slider_update,
+            submit_score,
+            redirect
         )
 
     def create_interface(self):
@@ -234,6 +256,8 @@ class MOSTest:
                     label="Score"
                 )
                 submit_score = gr.Button("Submit Rating")
+
+                redirect = gr.Button("Return to Prolific", visible=False)  # For redirecting to Prolific
 
             def load_and_populate(request: gr.Request):
                 """Load page and capture URL parameters, then conditionally show/hide input fields"""
@@ -345,7 +369,15 @@ class MOSTest:
             submit_score.click(
                 self.run_test,
                 inputs=[user_id, score_input, target],
-                outputs=[instructions, progress_text, reference, target, score_input]
+                outputs=[instructions, progress_text, reference, target, score_input, submit_score, redirect],
+            )
+
+            redirect_url = 'https://app.prolific.com/submissions/complete?cc=C1E3KUXW'
+            redirect_js = f"() => {{ window.location.href = '{redirect_url}' }}"
+            redirect.click(
+                lambda: None,  # No action needed, just to trigger the redirect
+                outputs=[],
+                js=redirect_js
             )
 
         return interface
