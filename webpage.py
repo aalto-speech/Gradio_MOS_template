@@ -169,7 +169,9 @@ class MOSTest:
         progress = f"Progress: {self.current_page}/{self.total_pages} ({int(self.current_page/self.total_pages*100)}%)"
 
         if self.current_page >= self.total_pages:
-            filename = f"{user_id}_results.json"
+            filename = f"results/{user_id}_results.json"
+
+            os.makedirs("results/", exist_ok=True)
             
             # Add timestamp to the results
             final_results = {
