@@ -4,6 +4,7 @@ import os
 from gradio import update
 
 from utils import is_valid_email
+from pages import PageFactory
 
 class MOSTest:
     def __init__(self):
@@ -50,14 +51,21 @@ class MOSTest:
         """Get a specific parameter value from URL parameters"""
         return self.url_params.get(param_name, default)
 
+    def get_current_page(self):
+        """Get the current test page object"""
+        if self.current_page < len(self.test_cases):
+            test_case = self.test_cases[self.current_page]
+            return PageFactory.create_page(test_case)
+        return None
+
     def get_initial_test_updates(self):
         """Get the initial test page updates when auto-starting"""
-        if self.current_page < len(self.test_cases):
-            first_page = self.test_cases[self.current_page]
-            ref_audio = self.get_audio_path(first_page["reference"])
-            tar_audio = self.get_audio_path(first_page["target"])
-            slider_update = self.get_slider_update(first_page["type"])
-            instructions = self.get_instructions(first_page["type"])
+        page = self.get_current_page()
+        if page:
+            instructions = page.get_instructions()
+            ref_audio = page.get_reference_audio()
+            tar_audio = page.get_target_audio()
+            slider_update = page.get_slider_update()
             return instructions, ref_audio, tar_audio, slider_update
         return None, None, None, None
 
@@ -66,74 +74,8 @@ class MOSTest:
             return None, "Please provide either Email or Prolific PID"
         return email or prolific_pid, None
 
-    def get_instructions(self, test_type):
-        if test_type == "smos":
-            return """
-            ### Speaker Similarity Test (SMOS)
-            Please rate how similar the voice in the target audio is to the reference audio.
-            - Scale: 1-5 (1: Very Different, 5: Very Similar)
-            - Use whole numbers only
-            """
-        elif test_type == "smos_instruction":
-            return """
-            ### Speaker Similarity Test - Instruction (SMOS)
-            **This is an instruction example where both audios are from the same speaker with different content.**
-            
-            Please rate how similar the voice in the target audio is to the reference audio.
-            - Scale: 1-5 (1: Very Different, 5: Very Similar)
-            - **For this instruction example, you should give a score of 5 since it's the same speaker**
-            - Use whole numbers only
-            """
-        elif test_type == "cmos":
-            return """
-            ### Comparative Mean Opinion Score Test (CMOS)
-            Please compare the naturalness of the target audio against the reference audio.
-            - Scale: -3 to +3
-            - Negative: Reference is better
-            - Positive: Target is better
-            - 0: Equal quality
-            """
-        elif test_type == "cmos_instruction":
-            return """
-            ### Comparative Mean Opinion Score Test - Instruction (CMOS)
-            **This is an instruction example where both audios are natural speech with equal quality.**
-            
-            Please compare the naturalness of the target audio against the reference audio.
-            - Scale: -3 to +3
-            - Negative: Reference is better
-            - Positive: Target is better
-            - **For this instruction example, you should give a score of 0 since both are natural speech with equal quality**
-            """
-        elif test_type == "attention":
-            return """
-            ### Attention Check
-            Both the reference and target audios are identical.
-            Please rate as the instruction instructed.
-            - Scale: 1-5
-            """
-        else:
-            return """
-            ### Unknown Test Type
-            Please follow the instructions provided.
-            """
-
-    def get_audio_path(self, audio_file):
-        # Convert relative audio file paths to absolute if needed.
-        if not os.path.isabs(audio_file):
-            return os.path.abspath(audio_file)
-        return audio_file
-
-    def get_slider_update(self, test_type):
-        # For CMOS and CMOS_instruction, use -3 to 3; for SMOS, SMOS_instruction and attention, use 1 to 5.
-        if test_type in ["cmos", "cmos_instruction"]:
-            minimum, maximum, default = -3, 3, 0
-        else:  # smos, smos_instruction, attention
-            minimum, maximum, default = 1, 5, 3
-        return update(minimum=minimum, maximum=maximum, step=1, value=default)
-
     def run_test(self, user_id, score, audio_played):
-
-        # Set defult update values
+        # Set default update values
         instructions = update()
         progress = update()
         ref_audio = update(value=None)
@@ -151,11 +93,17 @@ class MOSTest:
             progress = f"Progress: {self.current_page}/{self.total_pages} ({int(self.current_page/self.total_pages*100)}%)"
             return instructions, progress, ref_audio, tar_audio, submit_score, redirect
         
-        test_page = self.test_cases[self.current_page]
+        # Get current page and validate score
+        current_page = self.get_current_page()
+        if current_page and not current_page.validate_score(score):
+            # Could add score validation error handling here
+            pass
+        
+        test_case = self.test_cases[self.current_page]
         # Store result from the current page, including URL parameters
         result_entry = {
-            "test_type": test_page["type"],
-            "target_audio": test_page["target"],
+            "test_type": test_case["type"],
+            "target_audio": test_case["target"],
             "score": score
         }
         
@@ -211,11 +159,19 @@ class MOSTest:
                 redirect
             )
 
-        next_page = self.test_cases[self.current_page]
-        instructions = self.get_instructions(next_page["type"])
-        ref_audio = self.get_audio_path(next_page["reference"])
-        tar_audio = self.get_audio_path(next_page["target"])
-        slider_update = self.get_slider_update(next_page["type"])
+        # Get next page configuration
+        next_page = self.get_current_page()
+        if next_page:
+            instructions = next_page.get_instructions()
+            ref_audio = next_page.get_reference_audio()
+            tar_audio = next_page.get_target_audio()
+            slider_update = next_page.get_slider_update()
+        else:
+            instructions = "Error: Could not load next test"
+            ref_audio = None
+            tar_audio = None
+            slider_update = update()
+            
         redirect = update()  # No redirect needed yet
         return (
             update(value=instructions),
@@ -251,11 +207,16 @@ class MOSTest:
                     reference = gr.Audio(label="Reference Audio")
                     target = gr.Audio(label="Target Audio")
                 
+                # Get initial slider config from first test case
+                first_page = PageFactory.create_page(self.test_cases[0])
+                min_val, max_val, default_val = first_page.get_slider_config()
+                
                 score_input = gr.Slider(
-                    minimum=-3 if self.test_cases[0]["type"] in ["cmos", "cmos_instruction"] else 1,
-                    maximum=3 if self.test_cases[0]["type"] in ["cmos", "cmos_instruction"] else 5,
+                    minimum=min_val,
+                    maximum=max_val,
                     step=1,
-                    label="Score"
+                    label="Score",
+                    value=default_val
                 )
                 submit_score = gr.Button("Submit Rating")
 
@@ -303,7 +264,7 @@ class MOSTest:
                         "",  # instructions (empty)
                         None,  # reference audio (empty)
                         None,  # target audio (empty)
-                        update(value=3),  # score input (default value)
+                        update(value=default_val),  # score input (default value)
                         update(visible=True),   # show email textbox
                         update(visible=False)   # hide prolific_pid textbox
                     )
@@ -313,7 +274,7 @@ class MOSTest:
                 if not is_valid_email(email_input) and not pid_input:
                     return (
                         None,
-                        update(value="Please provide an Email address", visible=True),
+                        update(value="Please provide a valid Email address", visible=True),
                         update(visible=False),
                         None,
                         None,
@@ -328,15 +289,24 @@ class MOSTest:
                 self.current_page = 0
                 self.results = []
                 
-                first_page = self.test_cases[0]
-                ref_audio = self.get_audio_path(first_page["reference"])
-                tar_audio = self.get_audio_path(first_page["target"])
-                slider_update = self.get_slider_update(first_page["type"])
+                # Get first page configuration
+                first_page = self.get_current_page()
+                if first_page:
+                    ref_audio = first_page.get_reference_audio()
+                    tar_audio = first_page.get_target_audio()
+                    slider_update = first_page.get_slider_update()
+                    instructions = first_page.get_instructions()
+                else:
+                    ref_audio = None
+                    tar_audio = None
+                    slider_update = update()
+                    instructions = "Error loading test"
+                
                 return (
                     valid_id,
                     update(value="", visible=False),
                     update(visible=True),
-                    self.get_instructions(first_page["type"]),
+                    instructions,
                     ref_audio,
                     tar_audio,
                     slider_update
