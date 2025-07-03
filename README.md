@@ -1,5 +1,7 @@
 # Gradio_MOS_template
 
+The is a template for using [Gradio](https://www.gradio.app/) to conduct Mean Opinion Score (MOS) evaluation for Speech and Audio Generation.
+
 ## Setup environment
 
 ```bash
@@ -21,3 +23,4 @@ Please refer to `pages.py` for more details.
 ## Future Plans
 
 - [ ] Provide support for different methods on obtaining `self.test_cases`
+- [ ] Supporting more types of test
