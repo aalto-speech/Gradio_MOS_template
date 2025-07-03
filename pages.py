@@ -39,6 +39,10 @@ class TestPage(ABC):
         minimum, maximum, default = self.get_slider_config()
         return update(minimum=minimum, maximum=maximum, step=1, value=default)
     
+    def requires_correspondence_question(self):
+        """Returns True if this page type requires the correspondence question"""
+        return False
+    
     def validate_score(self, score):
         """Validate if the score is within acceptable range"""
         minimum, maximum, _ = self.get_slider_config()
@@ -129,6 +133,71 @@ class AttentionPage(TestPage):
         return 1, 5, 3
 
 
+class EMOSPage(TestPage):
+    """EMOS (Editing Mean Opinion Score) test page"""
+    
+    def __init__(self, test_case):
+        super().__init__(test_case)
+        self.edited_transcript = test_case.get("edited_transcript", "")
+    
+    def get_instructions(self):
+        return """
+        ### Editing Mean Opinion Score Test (EMOS)
+        Please evaluate the edited speech based on the provided transcript.
+        
+        **Instructions:**
+        1. Read the edited transcript below
+        2. Listen to the edited speech
+        3. Rate the naturalness of the speech (1-5 scale)
+        4. Rate how well the editing is reflected in the speech (0-3 scale)
+        
+        **Naturalness Scale:**
+        - 1: Very Unnatural
+        - 5: Very Natural
+        
+        **Editing Effect Scale:**
+        - 0: The speech doesn't reflect the editing
+        - 1: Some editing is reflected
+        - 2: Most of the editing is reflected
+        - 3: All editing is reflected
+        """
+    
+    def get_slider_config(self):
+        return 1, 5, 3  # naturalness slider: min, max, default
+    
+    def get_editing_slider_config(self):
+        return 0, 3, 1  # editing effect slider: min, max, default
+    
+    def get_edited_transcript(self):
+        return self.edited_transcript
+    
+class EMOSInstructionPage(EMOSPage):
+    def get_instructions(self):
+        return """
+        ### Editing Mean Opinion Score Test (EMOS)
+        Please evaluate the edited speech based on the provided edited transcript.
+        The edited transcript have one or more characters being edited (e.g. replaced by other characters, inserting extra characters, switching the order of characters, etc.).
+
+        The edited transcript may contains incorrect or non-exist words, which is expected. Please focus on the naturalness of the speech and how well the editing is reflected in the speech.
+        
+        **Instructions:**
+        1. Read the edited transcript below
+        2. Listen to the edited speech
+        3. Rate the naturalness of the speech (1-5 scale)
+        4. Rate how well the editing is reflected in the speech (0-3 scale)
+        
+        **Naturalness Scale:**
+        - 1: Very Unnatural
+        - 5: Very Natural
+        
+        **Editing Effect Scale:**
+        - 0: The speech doesn't reflect the editing
+        - 1: Some editing is reflected
+        - 2: Most of the editing is reflected
+        - 3: All editing is reflected
+        """
+
+
 class PageFactory:
     """Factory class to create appropriate test pages"""
     
@@ -138,6 +207,8 @@ class PageFactory:
         "cmos": CMOSPage,
         "cmos_instruction": CMOSInstructionPage,
         "attention": AttentionPage,
+        "emos": EMOSPage,
+        "emos_instruction": EMOSInstructionPage,
     }
     
     @classmethod
@@ -155,3 +226,5 @@ class PageFactory:
     def register_page_type(cls, test_type, page_class):
         """Register a new page type"""
         cls.PAGE_CLASSES[test_type] = page_class
+
+
