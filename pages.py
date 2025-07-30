@@ -81,6 +81,78 @@ class SMOSInstructionPage(TestPage):
     def get_slider_config(self):
         return 1, 5, 3
 
+class NMOSPage(TestPage):
+    """NMOS (naturalness) test page"""
+    
+    def get_instructions(self):
+        return """
+        ### Speech Naturalness Test (NMOS)
+        Please rate how natural the voice in the target audio.
+        - Scale: 1-5 (1: very unnatural, 2: unnatural, 3: slightly unnatural, 4: natural, 5: very natural)
+        - Use whole numbers only
+        """
+    
+    def get_slider_config(self):
+        return 1, 5, 3  # min, max, default
+
+
+class NMOSInstructionPage(TestPage):
+    """NMOS instruction page"""
+    
+    def get_instructions(self):
+        return """
+        ### Speech Naturalness Test - Instruction (NMOS)
+        **This is an instruction example where the target audios is a natural speech.**
+        
+        Please rate how similar the voice in the target audio is to the reference audio.
+        - Scale: 1-5 (1: very unnatural, 2: unnatural, 3: slightly unnatural, 4: natural, 5: very natural)
+        - **For this instruction example, you should give a score of 5 since it's a natural speech**
+        - Use whole numbers only
+        """
+    
+    def get_slider_config(self):
+        return 1, 5, 3
+
+class QMOSPage(TestPage):
+    """QMOS (quality) test page"""
+    
+    def get_instructions(self):
+        return """
+        ### Speech Quality Test (QMOS)
+        Please rate the quality of the target audio.
+        - Scale: 1-5 (1: very bad, 2: bad, 3: ok, 4: good, 5: very good)
+        - Use whole numbers only
+        Please consider the following aspect for your rating:
+        1. Rate how pleasant the speech sounds to your ear.
+        2. Are there any audio artefacts, such as background noise, crackling, echo, volume inconsistencies, or digital distortions.
+        3. Is the speech clear and intelligible for you.
+        """
+    
+    def get_slider_config(self):
+        return 1, 5, 3  # min, max, default
+
+
+class QMOSInstructionPage(TestPage):
+    """QMOS instruction page"""
+    
+    def get_instructions(self):
+        return """
+        ### Speech Quality Test - Instruction (QMOS)
+        **This is an instruction example where the target audios is a high-quality speech.**
+        
+        Please rate the quality of the target audio.
+        - Scale: 1-5 (1: very bad, 2: bad, 3: ok, 4: good, 5: very good)
+        - **For this instruction example, you should give a score of 5 since it's a high-quality speech**
+        - Use whole numbers only
+        When evaluating the quality of the speech, please consider the following aspect for your rating:
+        1. How pleasant the speech sounds to your ear.
+        2. Are there any audio artefacts, such as background noise, crackling, echo, volume inconsistencies, or digital distortions.
+        3. Is the speech clear and intelligible for you.
+        """
+    
+    def get_slider_config(self):
+        return 1, 5, 3
+
 
 class CMOSPage(TestPage):
     """CMOS (Comparative Mean Opinion Score) test page"""
@@ -209,6 +281,10 @@ class PageFactory:
         "attention": AttentionPage,
         "emos": EMOSPage,
         "emos_instruction": EMOSInstructionPage,
+        "nmos": NMOSPage,
+        "nmos_instruction": NMOSInstructionPage,
+        "qmos": QMOSPage,
+        "qmos_instruction": QMOSInstructionPage,
     }
     
     @classmethod
