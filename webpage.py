@@ -27,6 +27,11 @@ class MOSTest:
                 "edited_transcript": "This is the edited transcript that the instruction speech should correspond to."
             },
             {
+                "type": "qmos_instruction",
+                "reference": None,
+                "target": "audios/2.wav",
+            },
+            {
                 "type": "emos",
                 "reference": "",  # Not used for EMOS
                 "target": "audios/3.wav",
@@ -75,7 +80,7 @@ class MOSTest:
         page = self.get_current_page()
         if page:
             instructions = page.get_instructions()
-            ref_audio = page.get_reference_audio() if not isinstance(page, EMOSPage) else None
+            ref_audio = page.get_reference_audio() #if not isinstance(page, EMOSPage) else None
             tar_audio = page.get_target_audio()
             slider_update = page.get_slider_update()
             

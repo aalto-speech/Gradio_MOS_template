@@ -48,6 +48,11 @@ class TestPage(ABC):
         minimum, maximum, _ = self.get_slider_config()
         return minimum <= score <= maximum
 
+class NoReferencePage(TestPage):
+    """Abstract base class for pages without reference audio"""
+    
+    def get_reference_audio(self):
+        return None
 
 class SMOSPage(TestPage):
     """SMOS (Speaker Similarity) test page"""
@@ -81,7 +86,7 @@ class SMOSInstructionPage(TestPage):
     def get_slider_config(self):
         return 1, 5, 3
 
-class NMOSPage(TestPage):
+class NMOSPage(NoReferencePage):
     """NMOS (naturalness) test page"""
     
     def get_instructions(self):
@@ -96,7 +101,7 @@ class NMOSPage(TestPage):
         return 1, 5, 3  # min, max, default
 
 
-class NMOSInstructionPage(TestPage):
+class NMOSInstructionPage(NoReferencePage):
     """NMOS instruction page"""
     
     def get_instructions(self):
@@ -113,7 +118,7 @@ class NMOSInstructionPage(TestPage):
     def get_slider_config(self):
         return 1, 5, 3
 
-class QMOSPage(TestPage):
+class QMOSPage(NoReferencePage):
     """QMOS (quality) test page"""
     
     def get_instructions(self):
@@ -132,7 +137,7 @@ class QMOSPage(TestPage):
         return 1, 5, 3  # min, max, default
 
 
-class QMOSInstructionPage(TestPage):
+class QMOSInstructionPage(NoReferencePage):
     """QMOS instruction page"""
     
     def get_instructions(self):
@@ -205,7 +210,7 @@ class AttentionPage(TestPage):
         return 1, 5, 3
 
 
-class EMOSPage(TestPage):
+class EMOSPage(NoReferencePage):
     """EMOS (Editing Mean Opinion Score) test page"""
     
     def __init__(self, test_case):
