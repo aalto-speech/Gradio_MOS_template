@@ -4,14 +4,17 @@ The is a template for using [Gradio](https://www.gradio.app/) to conduct Mean Op
 
 ## Setup environment
 
+We use [uv](https://github.com/astral-sh/uv) for dependency management. Please follow the instruction to install **uv** first.
+
+Then install the dependencies via:
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
 ## Run locally
-
-```python
-python webpage.py
+First activate the **uv** environment by:
+```bash
+uv run main.py
 ```
 
 ## Extend different types of test page
