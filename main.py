@@ -135,6 +135,9 @@ class MOSTest:
         result_entry = {
             "test_type": test_case["type"],
             "target_audio": test_case["target"],
+            "system": test_case.get(
+                "system", test_case.get("target_system", "")
+            ),
             "score": naturalness_score
         }
         
