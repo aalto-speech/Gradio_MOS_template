@@ -170,6 +170,8 @@ class TTSTestGenerator:
             
             ref_files = system_files[ref_system]
             target_files = system_files[target_system]
+
+            target_files_dict = {file['name']: file for file in target_files}
             
             if not ref_files or not target_files:
                 print(f"Warning: Empty audio files for CMOS pair {ref_system} vs {target_system}")
@@ -182,7 +184,7 @@ class TTSTestGenerator:
             
             while pairs_generated < max_possible_pairs:
                 ref_file = ref_files[pairs_generated]
-                target_file = list(filter(lambda f: f['name'] == ref_file['name'], target_files))[0] if target_files else None
+                target_file = target_files_dict.get(ref_file['name'])
 
                 if not target_file:
                     print(f"Warning: No matching target file found for {ref_file['name']} in {target_system}")
