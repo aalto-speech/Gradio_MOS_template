@@ -8,7 +8,6 @@ import json
 import pickle
 import random
 import yaml
-import argparse
 from pathlib import Path
 from typing import List, Dict, Any
 from googleapiclient.discovery import build
@@ -16,6 +15,8 @@ from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 import os
+import hydra
+from omegaconf import DictConfig
 
 # Scopes required for Google Drive API
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
@@ -388,9 +389,8 @@ class TTSTestGenerator:
         
         return system_files
     
-    def generate_test_pairs(self, config_path: str, output_path: str, num_pairs: int = 50):
+    def generate_test_pairs(self, config: Dict, output_path: str, num_pairs: int = 50):
         """Generate test pairs for all supported test types found in config"""
-        config = self.load_config(config_path)
         
         # Load system files
         system_files = self._load_system_files(config)
@@ -439,22 +439,33 @@ class TTSTestGenerator:
         
         return test_results
 
-def main():
-    parser = argparse.ArgumentParser(description='Generate TTS evaluation test pairs from Google Drive')
-    parser.add_argument('--credentials', required=True, help='Path to Google Drive API credentials JSON file')
-    parser.add_argument('--config', required=True, help='Path to configuration YAML file')
-    parser.add_argument('--output', default='test_lists/test_list.json', help='Output JSON file path')
-    parser.add_argument('--num-pairs', type=int, default=50, help='Number of pairs to generate per comparison')
-    parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+@hydra.main(version_base=None, config_path="config", config_name=None)
+def main(cfg: DictConfig) -> None:
+    """Main function using Hydra for configuration management"""
+    print("TTS Audio Test Generator")
+    print("=" * 50)
     
-    args = parser.parse_args()
+    # Set random seed if provided
+    if cfg.get('seed'):
+        random.seed(cfg.seed)
+        print(f"Using random seed: {cfg.seed}")
     
-    if args.seed:
-        random.seed(args.seed)
-        print(f"Using random seed: {args.seed}")
+    # Create output directory if it doesn't exist
+    output_path = Path(cfg.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     
-    generator = TTSTestGenerator(args.credentials)
-    generator.generate_test_pairs(args.config, args.output, args.num_pairs)
+    # Initialize generator
+    generator = TTSTestGenerator(cfg.credentials)
+    
+    # Convert Hydra config to regular dict for compatibility
+    config_dict = {
+        'root_dir': cfg.root_dir,
+        'systems': list(cfg.systems),
+        'tests': dict(cfg.tests)
+    }
+    
+    # Generate test pairs
+    generator.generate_test_pairs(config_dict, cfg.output, cfg.num_pairs)
 
 if __name__ == '__main__':
     main()

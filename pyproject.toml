@@ -9,4 +9,5 @@ dependencies = [
     "google-api-python-client>=2.178.0",
     "google-auth-oauthlib>=1.2.2",
     "gradio==5.35.0",
+    "hydra-core>=1.3.2",
 ]

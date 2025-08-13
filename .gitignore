@@ -3,3 +3,4 @@ results/
 .venv
 test_list_builders/google_drive/credentials/*
 test_lists/
+outputs/
