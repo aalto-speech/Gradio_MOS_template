@@ -82,20 +82,39 @@ class TTSTestGenerator:
         query += " or ".join([f"mimeType='{mt}'" for mt in mime_types])
         query += ")"
         
-        results = self.service.files().list(
-            q=query,
-            fields="files(id, name, webViewLink, webContentLink)"
-        ).execute()
+        # Get all files with pagination
+        all_files = []
+        page_token = None
         
-        files = results.get('files', [])
+        while True:
+            # Request with pagination
+            request_params = {
+                'q': query,
+                'fields': "nextPageToken, files(id, name, webViewLink, webContentLink)",
+                'pageSize': 1000  # Maximum allowed page size
+            }
+            
+            if page_token:
+                request_params['pageToken'] = page_token
+            
+            results = self.service.files().list(**request_params).execute()
+            
+            files = results.get('files', [])
+            all_files.extend(files)
+            
+            # Check if there are more pages
+            page_token = results.get('nextPageToken')
+            if not page_token:
+                break
+            
+            print(f"Retrieved {len(all_files)} files so far for {system_name}...")
         
         # Filter by extension as backup (some files might not have correct MIME type)
         audio_files = []
-        for file in files:
+        for file in all_files:
             file_path = Path(file['name'])
             if file_path.suffix.lower() in self.audio_extensions:
-                # Create shareable link
-                self._make_file_shareable(file['id'])
+
                 download_link = f"https://drive.google.com/uc?id={file['id']}&export=download"
                 
                 # Create complete path from root_dir
@@ -109,6 +128,7 @@ class TTSTestGenerator:
                     'complete_path': complete_path  # Full path from root
                 })
         
+        print(f"Total audio files found in {system_name}: {len(audio_files)}")
         return audio_files
     
     def _make_file_shareable(self, file_id: str):

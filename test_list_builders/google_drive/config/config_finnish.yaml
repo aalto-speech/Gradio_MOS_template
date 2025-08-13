@@ -1,4 +1,4 @@
-root_dir: ICASSP-2026-Audios/Finnish
+root_dir: Finnish
 systems:
   - matcha_tts_finnish
   - original_finnish
