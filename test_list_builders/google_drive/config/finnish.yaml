@@ -2,7 +2,7 @@ credentials: test_list_builders/google_drive/credentials/credentials.json
 output: test_lists/test_list_2.json
 num_pairs: 20
 seed: 17
-root_dir: Finnish
+root_dir: ICASSP-2026-subj-eval-Finnish
 systems:
   - matcha_tts_finnish
   - original_finnish
