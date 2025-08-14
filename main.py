@@ -1,15 +1,33 @@
 import gradio as gr
 import json
 import os
+import random
+from typing import List
 from gradio import update
 
-from utils import is_valid_email
+from utils import is_valid_email, TestCasesSampler
 from pages import PageFactory, EMOSPage
 
 class MOSTest:
-    def __init__(self):
+    def __init__(self, test_cases: List):
         # Keep the structure of test_cases as a list
-        self.test_cases = [
+        self.test_cases = test_cases
+
+        # Add attention check cases
+        self.test_cases.extend([
+            {
+                "type": 'attention',
+                'reference': 'audios/attention_high.wav',
+                'target': 'audios/attention_high.wav'
+            },
+            {
+                "type": 'attention',
+                'reference': 'audios/attention_high.wav',
+                'target': 'audios/attention_high.wav'
+            },
+        ])
+        random.shuffle(self.test_cases)
+        instruction_pages = [
             {
                 "type": "smos_instruction",
                 "reference": "audios/1.wav",
@@ -20,39 +38,52 @@ class MOSTest:
                 "reference": "audios/4.wav",
                 "target": "audios/4.wav"
             },
-            {
-                "type": "emos_instruction",
-                "reference": "",  # Not used for EMOS
-                "target": "audios/4.wav",
-                "edited_transcript": "This is the edited transcript that the instruction speech should correspond to."
-            },
-            {
-                "type": "qmos_instruction",
-                "reference": None,
-                "target": "audios/2.wav",
-            },
-            {
-                "type": "emos",
-                "reference": "",  # Not used for EMOS
-                "target": "audios/3.wav",
-                "edited_transcript": "This is the edited transcript that the speech should correspond to."
-            },
-            {
-                "type": "smos",
-                "reference": "audios/1.wav",
-                "target": "audios/2.wav"
-            },
-            {
-                "type": "cmos",
-                "reference": "audios/3.wav",
-                "target": "audios/4.wav"
-            },
-            {
-                "type": 'attention',
-                'reference': 'audios/attention_high.wav',
-                'target': 'audios/attention_high.wav'
-            }
         ]
+        self.test_cases = instruction_pages + self.test_cases
+        # self.test_cases = [
+        #     {
+        #         "type": "smos_instruction",
+        #         "reference": "audios/1.wav",
+        #         "target": "audios/1.wav"
+        #     },
+        #     {
+        #         "type": "cmos_instruction",
+        #         "reference": "audios/4.wav",
+        #         "target": "audios/4.wav"
+        #     },
+        #     {
+        #         "type": "emos_instruction",
+        #         "reference": "",  # Not used for EMOS
+        #         "target": "audios/4.wav",
+        #         "edited_transcript": "This is the edited transcript that the instruction speech should correspond to."
+        #     },
+        #     {
+        #         "type": "qmos_instruction",
+        #         "reference": None,
+        #         "target": "audios/2.wav",
+        #     },
+        #     {
+        #         "type": "emos",
+        #         "reference": "",  # Not used for EMOS
+        #         "target": "audios/3.wav",
+        #         "edited_transcript": "This is the edited transcript that the speech should correspond to."
+        #     },
+        #     {
+        #         "type": "smos",
+        #         "reference": "audios/1.wav",
+        #         "target": "audios/2.wav"
+        #     },
+        #     {
+        #         "type": "cmos",
+        #         "reference": "audios/3.wav",
+        #         "target": "audios/4.wav"
+        #     },
+        #     {
+        #         "type": 'attention',
+        #         'reference': 'audios/attention_high.wav',
+        #         'target': 'audios/attention_high.wav'
+        #     }
+        # ]
         self.current_page = 0
         self.total_pages = len(self.test_cases)
         self.results = []
@@ -283,7 +314,7 @@ class MOSTest:
                     minimum=min_val,
                     maximum=max_val,
                     step=1,
-                    label="Naturalness Score",
+                    label="Your Score",
                     value=default_val
                 )
                 
@@ -472,7 +503,14 @@ class MOSTest:
         return interface
 
 if __name__ == "__main__":
-    test = MOSTest()
+    sampler = TestCasesSampler(
+        './test_lists/test_list_2.json',
+        sample_size_per_test=4,
+    )
+    cases = sampler.sample_test_cases()
+    with open('./test_lists/test_list_2_sampled.json', 'w') as f:
+        json.dump(cases, f, indent=4)
+    test = MOSTest(test_cases=cases)
     interface = test.create_interface()
     interface.launch(
         allowed_paths=[os.getcwd()]

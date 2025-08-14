@@ -22,17 +22,11 @@ class TestPage(ABC):
         """Return slider configuration (min, max, default)"""
         pass
     
-    def get_audio_path(self, audio_file):
-        """Convert relative audio file paths to absolute if needed"""
-        if not os.path.isabs(audio_file):
-            return os.path.abspath(audio_file)
-        return audio_file
-    
     def get_reference_audio(self):
-        return self.get_audio_path(self.reference)
+        return self.reference
     
     def get_target_audio(self):
-        return self.get_audio_path(self.target)
+        return self.target
     
     def get_slider_update(self):
         """Get slider update configuration"""
@@ -280,15 +274,20 @@ class PageFactory:
     
     PAGE_CLASSES = {
         "smos": SMOSPage,
+        "SMOS": SMOSPage,
         "smos_instruction": SMOSInstructionPage,
         "cmos": CMOSPage,
+        "CMOS": CMOSPage,
         "cmos_instruction": CMOSInstructionPage,
         "attention": AttentionPage,
         "emos": EMOSPage,
+        "EMOS": EMOSPage,
         "emos_instruction": EMOSInstructionPage,
         "nmos": NMOSPage,
+        "NMOS": NMOSPage,
         "nmos_instruction": NMOSInstructionPage,
         "qmos": QMOSPage,
+        "QMOS": QMOSPage,
         "qmos_instruction": QMOSInstructionPage,
     }
     
