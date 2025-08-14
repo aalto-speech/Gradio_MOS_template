@@ -46,8 +46,17 @@ class MOSTest:
 
     def sample_test_cases_for_session(self):
         """Sample new test cases for each session"""
-        test_cases = self.case_sampler.sample_test_cases() + self.attention_checks
-        random.shuffle(test_cases)
+        questions = self.case_sampler.sample_test_cases()
+        test_cases = []
+        for _, cases in questions.items():
+            random.shuffle(cases)
+            test_cases.extend(cases)
+        
+        for attention_check in self.attention_checks:
+            test_cases.insert(
+                random.randint(int(0.25 * len(test_cases)), int(0.9 * len(test_cases))), 
+                attention_check
+            )
         test_cases = self.instruction_pages + test_cases
         return test_cases
 

@@ -1,6 +1,7 @@
 import json
 import random
 import re
+from collections import defaultdict
 
 def is_valid_email(email: str) -> bool:
     """
@@ -40,13 +41,13 @@ class TestCasesSampler:
         Returns:
             dict: A dictionary with sampled test cases
         """
-        sampled_cases = []
+        sampled_cases = defaultdict(list)
         
-        for _, system_pairs in self.test_cases.items():
+        for test, system_pairs in self.test_cases.items():
             for cases in system_pairs:
                 if len(cases) <= self.sample_size_per_test:
-                    sampled_cases.extend(cases)
+                    sampled_cases[test].extend(cases)
                 else:
-                    sampled_cases.extend(random.sample(cases, self.sample_size_per_test))
+                    sampled_cases[test].extend(random.sample(cases, self.sample_size_per_test))
         
         return sampled_cases
