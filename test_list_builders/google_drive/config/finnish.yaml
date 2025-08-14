@@ -1,0 +1,21 @@
+credentials: test_list_builders/google_drive/credentials/credentials.json
+output: test_lists/test_list_2.json
+num_pairs: 20
+seed: 17
+root_dir: ICASSP-2026-subj-eval-Finnish
+systems:
+  - matcha_tts_finnish
+  - original_finnish
+  - tts_finnish
+  - speaker_reference_finnish
+  - target_finnish
+tests:
+  CMOS:
+    - ref: original_finnish
+      target: tts_finnish
+    - ref: target_finnish
+      target: matcha_tts_finnish
+  SMOS:
+    - ref: speaker_reference_finnish
+      target: matcha_tts_finnish
+      metalst: test_list_builders/metalst/perso_eval.meta.lst
