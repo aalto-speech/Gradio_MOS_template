@@ -63,7 +63,7 @@ class SMOSPage(TestPage):
         return 1, 5, 3  # min, max, default
 
 
-class SMOSInstructionPage(TestPage):
+class SMOSInstructionPage(SMOSPage):
     """SMOS instruction page"""
     
     def get_instructions(self):
@@ -76,9 +76,6 @@ class SMOSInstructionPage(TestPage):
         - **For this instruction example, you should give a score of 5 since it's the same speaker**
         - Use whole numbers only
         """
-    
-    def get_slider_config(self):
-        return 1, 5, 3
 
 class NMOSPage(NoReferencePage):
     """NMOS (naturalness) test page"""
@@ -95,7 +92,7 @@ class NMOSPage(NoReferencePage):
         return 1, 5, 3  # min, max, default
 
 
-class NMOSInstructionPage(NoReferencePage):
+class NMOSInstructionPage(NMOSPage):
     """NMOS instruction page"""
     
     def get_instructions(self):
@@ -108,9 +105,6 @@ class NMOSInstructionPage(NoReferencePage):
         - **For this instruction example, you should give a score of 5 since it's a natural speech**
         - Use whole numbers only
         """
-    
-    def get_slider_config(self):
-        return 1, 5, 3
 
 class QMOSPage(NoReferencePage):
     """QMOS (quality) test page"""
@@ -131,7 +125,7 @@ class QMOSPage(NoReferencePage):
         return 1, 5, 3  # min, max, default
 
 
-class QMOSInstructionPage(NoReferencePage):
+class QMOSInstructionPage(QMOSPage):
     """QMOS instruction page"""
     
     def get_instructions(self):
@@ -148,9 +142,6 @@ class QMOSInstructionPage(NoReferencePage):
         2. Are there any audio artefacts, such as background noise, crackling, echo, volume inconsistencies, or digital distortions.
         3. Is the speech clear and intelligible for you.
         """
-    
-    def get_slider_config(self):
-        return 1, 5, 3
 
 
 class CMOSPage(TestPage):
@@ -159,10 +150,10 @@ class CMOSPage(TestPage):
     def get_instructions(self):
         return """
         ### Comparative Mean Opinion Score Test (CMOS)
-        Please compare the naturalness of the target audio against the reference audio.
+        Please compare the naturalness of the sample B against the sample A.
         - Scale: -3 to +3
-        - Negative: Reference is better
-        - Positive: Target is better
+        - Negative: Sample A is better
+        - Positive: Sample B is better
         - 0: Equal quality
         """
     
@@ -170,7 +161,7 @@ class CMOSPage(TestPage):
         return -3, 3, 0
 
 
-class CMOSInstructionPage(TestPage):
+class CMOSInstructionPage(CMOSPage):
     """CMOS instruction page"""
     
     def get_instructions(self):
@@ -178,15 +169,12 @@ class CMOSInstructionPage(TestPage):
         ### Comparative Mean Opinion Score Test - Instruction (CMOS)
         **This is an instruction example where both audios are natural speech with equal quality.**
         
-        Please compare the naturalness of the target audio against the reference audio.
+        Please compare the naturalness of the sample B against the sample A.
         - Scale: -3 to +3
-        - Negative: Reference is better
-        - Positive: Target is better
+        - Negative: Sample A is better
+        - Positive: Sample B is better
         - **For this instruction example, you should give a score of 0 since both are natural speech with equal quality**
         """
-    
-    def get_slider_config(self):
-        return -3, 3, 0
 
 
 class AttentionPage(TestPage):

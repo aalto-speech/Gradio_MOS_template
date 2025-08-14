@@ -6,7 +6,7 @@ from typing import List
 from gradio import update
 
 from utils import is_valid_email, TestCasesSampler
-from pages import PageFactory, EMOSPage
+from pages import PageFactory, EMOSPage, CMOSPage
 
 class MOSTest:
     def __init__(self, case_sampler: TestCasesSampler):
@@ -250,8 +250,8 @@ class MOSTest:
         return (
             update(value=instructions),
             progress,
-            update(value=ref_audio),
-            update(value=tar_audio),
+            update(value=ref_audio, label='sample A' if isinstance(next_page, CMOSPage) else 'Reference'),
+            update(value=tar_audio, label='sample B' if isinstance(next_page, CMOSPage) else 'Target'),
             slider_update,
             submit_score,
             redirect,
@@ -401,7 +401,8 @@ class MOSTest:
                     return (
                         None,
                         update(value="Please provide a valid Email address", visible=True),
-                        update(visible=False),
+                        update(visible=True),  # Keep id_input_section visible for retry
+                        update(visible=False),  # Keep test_interface hidden
                         None,
                         None,
                         None,
@@ -444,8 +445,9 @@ class MOSTest:
                 
                 return (
                     valid_id,
-                    update(value="", visible=False),
-                    update(visible=True),
+                    update(value="", visible=False),  # Hide error message
+                    update(visible=False),  # Hide the entire id_input_section (email box + start button)
+                    update(visible=True),   # Show the test_interface
                     instructions,
                     ref_audio,
                     tar_audio,
@@ -486,7 +488,7 @@ class MOSTest:
             submit_id.click(
                 start_test,
                 inputs=[email, prolific_pid, test_cases_state],
-                outputs=[user_id, id_error, test_interface, instructions, reference, target, score_input, emos_transcript_label, edited_transcript, current_page_state, results_state]
+                outputs=[user_id, id_error, id_input_section, test_interface, instructions, reference, target, score_input, emos_transcript_label, edited_transcript, current_page_state, results_state]
             )
 
             submit_score.click(
