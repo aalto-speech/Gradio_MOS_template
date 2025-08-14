@@ -9,12 +9,12 @@ from utils import is_valid_email, TestCasesSampler
 from pages import PageFactory, EMOSPage
 
 class MOSTest:
-    def __init__(self, test_cases: List):
+    def __init__(self, case_sampler: TestCasesSampler):
         # Keep the structure of test_cases as a list
-        self.test_cases = test_cases
+        self.case_sampler = case_sampler
 
         # Add attention check cases
-        self.test_cases.extend([
+        self.attention_checks = [
             {
                 "type": 'attention',
                 'reference': 'audios/attention_high.wav',
@@ -25,9 +25,8 @@ class MOSTest:
                 'reference': 'audios/attention_high.wav',
                 'target': 'audios/attention_high.wav'
             },
-        ])
-        random.shuffle(self.test_cases)
-        instruction_pages = [
+        ]
+        self.instruction_pages = [
             {
                 "type": "smos_instruction",
                 "reference": "audios/1.wav",
@@ -39,76 +38,39 @@ class MOSTest:
                 "target": "audios/4.wav"
             },
         ]
-        self.test_cases = instruction_pages + self.test_cases
-        # self.test_cases = [
-        #     {
-        #         "type": "smos_instruction",
-        #         "reference": "audios/1.wav",
-        #         "target": "audios/1.wav"
-        #     },
-        #     {
-        #         "type": "cmos_instruction",
-        #         "reference": "audios/4.wav",
-        #         "target": "audios/4.wav"
-        #     },
-        #     {
-        #         "type": "emos_instruction",
-        #         "reference": "",  # Not used for EMOS
-        #         "target": "audios/4.wav",
-        #         "edited_transcript": "This is the edited transcript that the instruction speech should correspond to."
-        #     },
-        #     {
-        #         "type": "qmos_instruction",
-        #         "reference": None,
-        #         "target": "audios/2.wav",
-        #     },
-        #     {
-        #         "type": "emos",
-        #         "reference": "",  # Not used for EMOS
-        #         "target": "audios/3.wav",
-        #         "edited_transcript": "This is the edited transcript that the speech should correspond to."
-        #     },
-        #     {
-        #         "type": "smos",
-        #         "reference": "audios/1.wav",
-        #         "target": "audios/2.wav"
-        #     },
-        #     {
-        #         "type": "cmos",
-        #         "reference": "audios/3.wav",
-        #         "target": "audios/4.wav"
-        #     },
-        #     {
-        #         "type": 'attention',
-        #         'reference': 'audios/attention_high.wav',
-        #         'target': 'audios/attention_high.wav'
-        #     }
-        # ]
-        self.current_page = 0
-        self.total_pages = len(self.test_cases)
-        self.results = []
-        self.url_params = {}
+
+        # Remove these from __init__ - they'll be per-session now
+        # self.current_page = 0
+        # self.results = []
+        # self.url_params = {}
+
+    def sample_test_cases_for_session(self):
+        """Sample new test cases for each session"""
+        test_cases = self.case_sampler.sample_test_cases() + self.attention_checks
+        random.shuffle(test_cases)
+        test_cases = self.instruction_pages + test_cases
+        return test_cases
 
     def capture_url_params(self, request: gr.Request):
         """Capture URL query parameters from the request"""
         if request and hasattr(request, 'query_params'):
-            self.url_params = dict(request.query_params)
-        return self.url_params
+            return dict(request.query_params)
+        return {}
 
-    def get_param_value(self, param_name, default=""):
+    def get_param_value(self, url_params, param_name, default=""):
         """Get a specific parameter value from URL parameters"""
-        return self.url_params.get(param_name, default)
+        return url_params.get(param_name, default)
 
-    def get_current_page(self):
+    def get_current_page(self, test_cases, current_page):
         """Get the current test page object"""
-        if self.current_page < len(self.test_cases):
-            test_case = self.test_cases[self.current_page]
+        if current_page < len(test_cases):
+            test_case = test_cases[current_page]
             return PageFactory.create_page(test_case)
         return None
 
-    def get_initial_test_updates(self):
+    def get_initial_test_updates(self, test_cases):
         """Get the initial test page updates when auto-starting"""
-        page = self.get_current_page()
+        page = self.get_current_page(test_cases, 0)
         if page:
             instructions = page.get_instructions()
             ref_audio = page.get_reference_audio() #if not isinstance(page, EMOSPage) else None
@@ -134,7 +96,18 @@ class MOSTest:
             return None, "Please provide either Email or Prolific PID"
         return email or prolific_pid, None
 
-    def run_test(self, user_id, naturalness_score, audio_played, editing_score=None):
+    def run_test(self, user_id, naturalness_score, audio_played, editing_score=None, 
+                 test_cases=None, current_page=0, results=None, url_params=None):
+        # Initialize session data if not provided
+        if test_cases is None:
+            test_cases = []
+        if results is None:
+            results = []
+        if url_params is None:
+            url_params = {}
+            
+        total_pages = len(test_cases)
+        
         # Set default update values
         instructions = update()
         progress = update()
@@ -147,21 +120,23 @@ class MOSTest:
         transcript = update(value="", visible=False)
 
         # Check that we have a valid user_id and are within bounds
-        if not user_id or self.current_page >= self.total_pages:
-            return instructions, progress, ref_audio, tar_audio, submit_score, redirect, emos_label, transcript
+        if not user_id or current_page >= total_pages:
+            return (instructions, progress, ref_audio, tar_audio, submit_score, redirect, 
+                   emos_label, transcript, test_cases, current_page, results)
             
         # Check that the target audio was played
         if audio_played is None:
-            progress = f"Progress: {self.current_page}/{self.total_pages} ({int(self.current_page/self.total_pages*100)}%)"
-            return instructions, progress, ref_audio, tar_audio, submit_score, redirect, emos_label, transcript
+            progress = f"Progress: {current_page}/{total_pages} ({int(current_page/total_pages*100)}%)"
+            return (instructions, progress, ref_audio, tar_audio, submit_score, redirect, 
+                   emos_label, transcript, test_cases, current_page, results)
         
         # Get current page and validate score
-        current_page = self.get_current_page()
-        if current_page and not current_page.validate_score(naturalness_score):
+        current_page_obj = self.get_current_page(test_cases, current_page)
+        if current_page_obj and not current_page_obj.validate_score(naturalness_score):
             # Could add score validation error handling here
             pass
         
-        test_case = self.test_cases[self.current_page]
+        test_case = test_cases[current_page]
         # Store result from the current page, including URL parameters
         result_entry = {
             "test_type": test_case["type"],
@@ -173,23 +148,23 @@ class MOSTest:
         }
         
         # Add editing score and transcript for EMOS tests
-        if isinstance(current_page, EMOSPage):
+        if isinstance(current_page_obj, EMOSPage):
             result_entry["naturalness_score"] = naturalness_score
             result_entry["editing_score"] = editing_score
-            result_entry["edited_transcript"] = current_page.get_edited_transcript()
+            result_entry["edited_transcript"] = current_page_obj.get_edited_transcript()
             # Remove the generic "score" for EMOS to avoid confusion
             del result_entry["score"]
         
         # Add URL parameters to the result if they exist
-        if self.url_params:
-            result_entry["url_params"] = self.url_params
+        if url_params:
+            result_entry["url_params"] = url_params
             
-        self.results.append(result_entry)
+        results.append(result_entry)
 
-        self.current_page += 1
-        progress = f"Progress: {self.current_page}/{self.total_pages} ({int(self.current_page/self.total_pages*100)}%)"
+        current_page += 1
+        progress = f"Progress: {current_page}/{total_pages} ({int(current_page/total_pages*100)}%)"
 
-        if self.current_page >= self.total_pages:
+        if current_page >= total_pages:
             filename = f"results/{user_id}_results.json"
 
             os.makedirs("results/", exist_ok=True)
@@ -198,7 +173,7 @@ class MOSTest:
             final_results = {
                 "user_id": user_id,
                 "timestamp": __import__('datetime').datetime.now().isoformat(),
-                "results": self.results
+                "results": results
             }
             
             # Overwrite the file completely with new results
@@ -233,11 +208,14 @@ class MOSTest:
                 submit_score,
                 redirect,
                 emos_label,
-                transcript
+                transcript,
+                test_cases,
+                current_page,
+                results
             )
 
         # Get next page configuration
-        next_page = self.get_current_page()
+        next_page = self.get_current_page(test_cases, current_page)
         if next_page:
             instructions = next_page.get_instructions()
             ref_audio = next_page.get_reference_audio() if not isinstance(next_page, EMOSPage) else None
@@ -269,13 +247,23 @@ class MOSTest:
             submit_score,
             redirect,
             emos_label,
-            transcript
+            transcript,
+            test_cases,
+            current_page,
+            results
         )
 
     def create_interface(self):
+        """Create the Gradio interface for the MOS test"""
+        # Don't sample test cases here - do it per session
         with gr.Blocks() as interface:
             user_id = gr.State(value=None)
             url_params_state = gr.State(value={})
+            
+            # Add session-specific state variables
+            test_cases_state = gr.State(value=[])
+            current_page_state = gr.State(value=0)
+            results_state = gr.State(value=[])
             
             # Add a component to display URL parameters (optional, for debugging)
             url_params_display = gr.JSON(label="URL Parameters", visible=False)
@@ -289,7 +277,7 @@ class MOSTest:
                 submit_id = gr.Button("Start Test")
 
             with gr.Column(visible=False) as test_interface:
-                progress_text = gr.HTML(f"Progress: 0/{self.total_pages}")
+                progress_text = gr.HTML("Progress: 0/0")
                 instructions = gr.Markdown()
                 
                 # EMOS-specific elements
@@ -303,19 +291,24 @@ class MOSTest:
                 )
                 
                 with gr.Row():
-                    reference = gr.Audio(label="Reference Audio")
-                    target = gr.Audio(label="Target Audio")
+                    reference = gr.Audio(
+                        label="Reference Audio",
+                        interactive=False,
+                        streaming=True,
+                    )
+                    target = gr.Audio(
+                        label="Target Audio",
+                        interactive=False,
+                        streaming=True,
+                    )
                 
-                # Get initial slider config from first test case
-                first_page = PageFactory.create_page(self.test_cases[0])
-                min_val, max_val, default_val = first_page.get_slider_config()
-                
+                # Get initial slider config from a default page
                 score_input = gr.Slider(
-                    minimum=min_val,
-                    maximum=max_val,
+                    minimum=1,
+                    maximum=5,
                     step=1,
                     label="Your Score",
-                    value=default_val
+                    value=3
                 )
                 
                 # EMOS editing effect slider
@@ -336,16 +329,16 @@ class MOSTest:
                 """Load page and capture URL parameters, then conditionally show/hide input fields"""
                 params = self.capture_url_params(request)
                 
-                # Reset test state for each new session/page load
-                self.current_page = 0
-                self.results = []
+                # Sample new test cases for this session
+                new_test_cases = self.sample_test_cases_for_session()
+                total_pages = len(new_test_cases)
                 
                 # Check for PROLIFIC_PID in URL parameters (exact match only)
                 prolific_pid_from_url = params.get('PROLIFIC_PID')
                 
                 if prolific_pid_from_url:
                     # PROLIFIC_PID found in URL - hide input section and auto-start
-                    instructions_val, ref_audio, tar_audio, slider_update, transcript_val, transcript_visible, editing_slider_update = self.get_initial_test_updates()
+                    instructions_val, ref_audio, tar_audio, slider_update, transcript_val, transcript_visible, editing_slider_update = self.get_initial_test_updates(new_test_cases)
                     return (
                         params,  # url_params_state
                         params,  # url_params_display
@@ -362,7 +355,11 @@ class MOSTest:
                         update(visible=False),   # hide prolific_pid textbox
                         update(visible=transcript_visible),  # emos label visibility
                         update(value=transcript_val, visible=transcript_visible),  # edited transcript
-                        editing_slider_update  # editing score slider
+                        editing_slider_update,  # editing score slider
+                        new_test_cases,  # test_cases_state
+                        0,  # current_page_state
+                        [],  # results_state
+                        f"Progress: 0/{total_pages} (0%)"  # progress_text
                     )
                 else:
                     # No PROLIFIC_PID in URL - show input fields
@@ -377,15 +374,19 @@ class MOSTest:
                         "",  # instructions (empty)
                         None,  # reference audio (empty)
                         None,  # target audio (empty)
-                        update(value=default_val),  # score input (default value)
+                        update(value=3),  # score input (default value)
                         update(visible=True),   # show email textbox
                         update(visible=False),   # hide prolific_pid textbox
                         update(visible=False),  # emos label (hidden)
                         update(value="", visible=False),  # edited transcript (hidden)
-                        update(visible=False)  # editing score slider (hidden)
+                        update(visible=False),  # editing score slider (hidden)
+                        new_test_cases,  # test_cases_state (still set for when they start)
+                        0,  # current_page_state
+                        [],  # results_state
+                        f"Progress: 0/{total_pages} (0%)"  # progress_text
                     )
 
-            def start_test(email_input, pid_input):
+            def start_test(email_input, pid_input, test_cases):
                 # Modified validation to only require email if no PID is provided
                 if not is_valid_email(email_input) and not pid_input:
                     return (
@@ -395,18 +396,18 @@ class MOSTest:
                         None,
                         None,
                         None,
-                        update()
+                        update(),
+                        update(visible=False),
+                        update(value="", visible=False),
+                        0,  # current_page_state
+                        []   # results_state
                     )
                 
                 # Use email as user_id, or PID if email is not provided
                 valid_id = email_input if email_input else pid_input
                 
-                # Reset test state when starting manually
-                self.current_page = 0
-                self.results = []
-                
                 # Get first page configuration
-                first_page = self.get_current_page()
+                first_page = self.get_current_page(test_cases, 0)
                 if first_page:
                     ref_audio = first_page.get_reference_audio() if not isinstance(first_page, EMOSPage) else None
                     tar_audio = first_page.get_target_audio()
@@ -441,7 +442,9 @@ class MOSTest:
                     tar_audio,
                     slider_update,
                     update(visible=transcript_visible),  # emos label visibility
-                    update(value=transcript_val, visible=transcript_visible)  # edited transcript
+                    update(value=transcript_val, visible=transcript_visible),  # edited transcript
+                    0,  # current_page_state (reset to 0)
+                    []   # results_state (reset to empty)
                 )
 
             # Load URL parameters when the interface loads
@@ -463,20 +466,26 @@ class MOSTest:
                     prolific_pid,  # prolific_pid visibility
                     emos_transcript_label,  # EMOS label visibility
                     edited_transcript,  # EMOS transcript
-                    editing_score_input  # EMOS editing score slider
+                    editing_score_input,  # EMOS editing score slider
+                    test_cases_state,  # NEW: test cases for this session
+                    current_page_state,  # NEW: current page
+                    results_state,  # NEW: results
+                    progress_text  # NEW: progress update
                 ]
             )
 
             submit_id.click(
                 start_test,
-                inputs=[email, prolific_pid],
-                outputs=[user_id, id_error, test_interface, instructions, reference, target, score_input, emos_transcript_label, edited_transcript]
+                inputs=[email, prolific_pid, test_cases_state],
+                outputs=[user_id, id_error, test_interface, instructions, reference, target, score_input, emos_transcript_label, edited_transcript, current_page_state, results_state]
             )
 
             submit_score.click(
                 self.run_test,
-                inputs=[user_id, score_input, target, editing_score_input],
-                outputs=[instructions, progress_text, reference, target, score_input, submit_score, redirect, emos_transcript_label, edited_transcript],
+                inputs=[user_id, score_input, target, editing_score_input, 
+                       test_cases_state, current_page_state, results_state, url_params_state],
+                outputs=[instructions, progress_text, reference, target, score_input, submit_score, redirect, 
+                        emos_transcript_label, edited_transcript, test_cases_state, current_page_state, results_state],
             )
             
             # Update editing slider visibility when instructions change
@@ -507,10 +516,7 @@ if __name__ == "__main__":
         './test_lists/test_list_2.json',
         sample_size_per_test=4,
     )
-    cases = sampler.sample_test_cases()
-    with open('./test_lists/test_list_2_sampled.json', 'w') as f:
-        json.dump(cases, f, indent=4)
-    test = MOSTest(test_cases=cases)
+    test = MOSTest(case_sampler=sampler)
     interface = test.create_interface()
     interface.launch(
         allowed_paths=[os.getcwd()]
