@@ -528,5 +528,6 @@ if __name__ == "__main__":
     test = MOSTest(case_sampler=sampler)
     interface = test.create_interface()
     interface.launch(
-        allowed_paths=[os.getcwd()]
+        allowed_paths=[os.getcwd()],
+        share=True,
     )
