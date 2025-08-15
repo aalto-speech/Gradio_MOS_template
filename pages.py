@@ -179,6 +179,7 @@ class CMOSPage(TestPage):
         - Negative: Sample A is more human-sounded
         - Positive: Sample B is more human-sounded
         - 0: Equal quality
+        
         Tips:
         - The audios are recorded under various conditions and are speak in different speaking style, so please focus on how the voice sound like a natural human voice.
         - Please finish listening the given audio before submitting your score.
@@ -224,6 +225,7 @@ class AttentionPage(TestPage):
         Both the reference and target audios are identical.
         Please rate as the instruction instructed.
         - Scale: 1-5
+        Even though the audios are identical, please finish listening both audios before submit your answers.
         """
     
     def get_slider_config(self):

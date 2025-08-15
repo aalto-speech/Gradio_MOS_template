@@ -2,6 +2,7 @@ import json
 import random
 import re
 from collections import defaultdict
+from copy import deepcopy
 
 def is_valid_email(email: str) -> bool:
     """
@@ -49,5 +50,23 @@ class TestCasesSampler:
                     sampled_cases[test].extend(cases)
                 else:
                     sampled_cases[test].extend(random.sample(cases, self.sample_size_per_test))
+
+        if "CMOS" in sampled_cases:
+            cmos_cases = deepcopy(sampled_cases["CMOS"])
+
+            for i, case in enumerate(cmos_cases):
+                if random.random() < 0.5:
+                    new_case = {
+                        "reference": case["target"],
+                        "target": case["reference"],
+                        "type": case["type"],
+                        "ref_system": case["target_system"],
+                        "target_system": case["ref_system"],
+                        "ref_filename": case["target_filename"],
+                        "target_filename": case["ref_filename"],
+                        "swap": True,
+                    }
+                    cmos_cases[i] = new_case
+            sampled_cases["CMOS"] = cmos_cases
         
         return sampled_cases
