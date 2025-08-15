@@ -524,7 +524,7 @@ class MOSTest:
 
 if __name__ == "__main__":
     sampler = TestCasesSampler(
-        './test_lists/test_list_2.json',
+        './test_lists/test_list_webhome_Finnish.json',
         sample_size_per_test=4,
     )
     test = MOSTest(case_sampler=sampler)
