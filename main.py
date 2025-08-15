@@ -39,11 +39,6 @@ class MOSTest:
             },
         ]
 
-        # Remove these from __init__ - they'll be per-session now
-        # self.current_page = 0
-        # self.results = []
-        # self.url_params = {}
-
     def sample_test_cases_for_session(self):
         """Sample new test cases for each session"""
         questions = self.case_sampler.sample_test_cases()
@@ -77,27 +72,56 @@ class MOSTest:
             return PageFactory.create_page(test_case)
         return None
 
+    def create_radio_choices_and_default(self, page_obj, editing=False):
+        """Create radio button choices with labels from page object"""
+        if not editing:
+            min_val, max_val, _ = page_obj.get_slider_config()  # Ignore default value
+            level_labels = page_obj.get_level_label()  # Get labels for each level
+        else:
+            min_val, max_val, _ = page_obj.get_editing_slider_config()  # Ignore default value
+            level_labels = page_obj.get_editing_level_label()
+        
+        choices = []
+        values = []
+        current = min_val
+        label_index = 0
+        
+        while current <= max_val and label_index < len(level_labels):
+            # Create choice as "value: label" format
+            choice_text = f"{current}: {level_labels[label_index]}"
+            choices.append(choice_text)
+            values.append(str(current))
+            current += 1
+            label_index += 1
+        
+        return choices, values, None  # No default value
+
     def get_initial_test_updates(self, test_cases):
         """Get the initial test page updates when auto-starting"""
         page = self.get_current_page(test_cases, 0)
         if page:
             instructions = page.get_instructions()
-            ref_audio = page.get_reference_audio() #if not isinstance(page, EMOSPage) else None
+            ref_audio = page.get_reference_audio()
             tar_audio = page.get_target_audio()
-            slider_update = page.get_slider_update()
+            
+            # Get radio button config with labels
+            choices, values, _ = self.create_radio_choices_and_default(page)
+            radio_update = update(choices=choices, value=None, visible=True)
             
             # Handle EMOS-specific elements
             if isinstance(page, EMOSPage):
                 transcript = page.get_edited_transcript()
                 transcript_visible = True
-                editing_min, editing_max, editing_default = page.get_editing_slider_config()
-                editing_slider_update = update(minimum=editing_min, maximum=editing_max, step=1, value=editing_default, visible=True)
+                # For EMOS editing score, we need to create a temporary page object or handle differently
+                # Assuming EMOS page has editing score configuration
+                editing_choices, editing_values, _ = self.create_radio_choices_and_default(page, editing=True)  # You might need separate method for editing
+                editing_radio_update = update(choices=editing_choices, value=None, visible=True)
             else:
                 transcript = ""
                 transcript_visible = False
-                editing_slider_update = update(visible=False)
+                editing_radio_update = update(visible=False)
                 
-            return instructions, ref_audio, tar_audio, slider_update, transcript, transcript_visible, editing_slider_update
+            return instructions, ref_audio, tar_audio, radio_update, transcript, transcript_visible, editing_radio_update
         return None, None, None, None, "", False, update(visible=False)
 
     def validate_id(self, email, prolific_pid):
@@ -105,7 +129,7 @@ class MOSTest:
             return None, "Please provide either Email or Prolific PID"
         return email or prolific_pid, None
 
-    def run_test(self, user_id, naturalness_score, audio_played, editing_score=None, 
+    def run_test(self, user_id, naturalness_score, ref_audio_played, target_audio_played, editing_score=None, 
                  test_cases=None, current_page=0, results=None, url_params=None):
         # Initialize session data if not provided
         if test_cases is None:
@@ -116,32 +140,55 @@ class MOSTest:
             url_params = {}
             
         total_pages = len(test_cases)
-        
-        # Set default update values
+
+        # Initialize ALL return variables at the start to prevent UnboundLocalError
         instructions = update()
         progress = update()
-        ref_audio = update(value=None)
-        tar_audio = update(value=None)
-        slider_update = update(visible=False)
+        ref_audio = update()
+        tar_audio = update()
+        radio_update = update()
         submit_score = update(visible=True)
-        redirect = update()  # No redirect by default
-        emos_label = update(visible=False)
-        transcript = update(value="", visible=False)
+        redirect = update()
+        emos_label = update()
+        transcript = update()
 
         # Check that we have a valid user_id and are within bounds
         if not user_id or current_page >= total_pages:
-            return (instructions, progress, ref_audio, tar_audio, submit_score, redirect, 
-                   emos_label, transcript, test_cases, current_page, results)
-            
-        # Check that the target audio was played
-        if audio_played is None:
-            progress = f"Progress: {current_page}/{total_pages} ({int(current_page/total_pages*100)}%)"
-            return (instructions, progress, ref_audio, tar_audio, submit_score, redirect, 
-                   emos_label, transcript, test_cases, current_page, results)
+            return (instructions, progress, ref_audio, tar_audio, radio_update, submit_score, redirect, 
+                   emos_label, transcript, test_cases, current_page, results, ref_audio_played, target_audio_played)
         
-        # Get current page and validate score
+        # Get current page to check requirements
         current_page_obj = self.get_current_page(test_cases, current_page)
-        if current_page_obj and not current_page_obj.validate_score(naturalness_score):
+        needs_reference = not isinstance(current_page_obj, EMOSPage) and current_page_obj.get_reference_audio() is not None
+        
+        # Check that required audios were played
+        if not target_audio_played:
+            progress = f"Progress: {current_page}/{total_pages} ({int(current_page/total_pages*100)}%)"
+            f"- Please finishing listening all given audio to completion"
+            return (instructions, progress, ref_audio, tar_audio, radio_update, submit_score, redirect, 
+                   emos_label, transcript, test_cases, current_page, results, ref_audio_played, target_audio_played)
+        
+        if needs_reference and not ref_audio_played:
+            progress = f"Progress: {current_page}/{total_pages} ({int(current_page/total_pages*100)}%)" 
+            f"- Please finishing listening all given audio to completion"
+            return (instructions, progress, ref_audio, tar_audio, radio_update, submit_score, redirect, 
+                   emos_label, transcript, test_cases, current_page, results, ref_audio_played, target_audio_played)
+        
+        # Check that a score was selected
+        if naturalness_score is None:
+            progress = f"Progress: {current_page}/{total_pages} ({int(current_page/total_pages*100)}%) - Please select a score"
+            return (instructions, progress, ref_audio, tar_audio, radio_update, submit_score, redirect, 
+                   emos_label, transcript, test_cases, current_page, results, ref_audio_played, target_audio_played)
+        
+        # Extract numeric value from "value: label" format
+        try:
+            naturalness_score_int = int(naturalness_score.split(':')[0]) if naturalness_score else None
+            editing_score_int = int(editing_score.split(':')[0]) if editing_score else None
+        except (ValueError, TypeError, AttributeError):
+            naturalness_score_int = None
+            editing_score_int = None
+        
+        if current_page_obj and naturalness_score_int is not None and not current_page_obj.validate_score(naturalness_score_int):
             # Could add score validation error handling here
             pass
         
@@ -153,13 +200,13 @@ class MOSTest:
             "system": test_case.get(
                 "system", test_case.get("target_system", "")
             ),
-            "score": naturalness_score
+            "score": naturalness_score_int
         }
         
         # Add editing score and transcript for EMOS tests
         if isinstance(current_page_obj, EMOSPage):
-            result_entry["naturalness_score"] = naturalness_score
-            result_entry["editing_score"] = editing_score
+            result_entry["naturalness_score"] = naturalness_score_int
+            result_entry["editing_score"] = editing_score_int
             result_entry["edited_transcript"] = current_page_obj.get_edited_transcript()
             # Remove the generic "score" for EMOS to avoid confusion
             del result_entry["score"]
@@ -205,7 +252,7 @@ class MOSTest:
             instructions = update(value=finish_message)
             ref_audio = update(value=None, visible=False)
             tar_audio = update(value=None, visible=False)
-            slider_update = update(visible=False)
+            radio_update = update(visible=False)
             emos_label = update(visible=False)
             transcript = update(value="", visible=False)
             return (
@@ -213,14 +260,16 @@ class MOSTest:
                 progress,
                 ref_audio,
                 tar_audio,
-                slider_update,
+                radio_update,
                 submit_score,
                 redirect,
                 emos_label,
                 transcript,
                 test_cases,
                 current_page,
-                results
+                results,
+                False,  # Reset ref_audio_played for next session
+                False   # Reset target_audio_played for next session
             )
 
         # Get next page configuration
@@ -229,7 +278,10 @@ class MOSTest:
             instructions = next_page.get_instructions()
             ref_audio = next_page.get_reference_audio() if not isinstance(next_page, EMOSPage) else None
             tar_audio = next_page.get_target_audio()
-            slider_update = next_page.get_slider_update()
+            
+            # Get radio button configuration for next page
+            choices, values, _ = self.create_radio_choices_and_default(next_page)
+            radio_update = update(choices=choices, value=None, visible=True)
             
             # Handle EMOS-specific elements
             if isinstance(next_page, EMOSPage):
@@ -242,24 +294,29 @@ class MOSTest:
             instructions = "Error: Could not load next test"
             ref_audio = None
             tar_audio = None
-            slider_update = update()
+            radio_update = update()
             emos_label = update(visible=False)
             transcript = update(value="", visible=False)
             
-        redirect = update()  # No redirect needed yet
+        # Ensure submit_score is always defined for normal progression
+        submit_score = update(visible=True)
+        redirect = update()
+        
         return (
             update(value=instructions),
             progress,
             update(value=ref_audio, label='sample A' if isinstance(next_page, CMOSPage) else 'Reference'),
             update(value=tar_audio, label='sample B' if isinstance(next_page, CMOSPage) else 'Target'),
-            slider_update,
+            radio_update,
             submit_score,
             redirect,
             emos_label,
             transcript,
             test_cases,
             current_page,
-            results
+            results,
+            False,  # Reset ref_audio_played for next page
+            False   # Reset target_audio_played for next page
         )
 
     def create_interface(self):
@@ -273,6 +330,10 @@ class MOSTest:
             test_cases_state = gr.State(value=[])
             current_page_state = gr.State(value=0)
             results_state = gr.State(value=[])
+            
+            # Add audio playback tracking state variables
+            ref_audio_played_state = gr.State(value=False)
+            target_audio_played_state = gr.State(value=False)
             
             # Add a component to display URL parameters (optional, for debugging)
             url_params_display = gr.JSON(label="URL Parameters", visible=False)
@@ -311,23 +372,21 @@ class MOSTest:
                         streaming=True,
                     )
                 
-                # Get initial slider config from a default page
-                score_input = gr.Slider(
-                    minimum=1,
-                    maximum=5,
-                    step=1,
+                # Replace slider with radio buttons for score input
+                score_input = gr.Radio(
+                    choices=[],
+                    value=None,
                     label="Your Score",
-                    value=3
+                    interactive=True
                 )
                 
-                # EMOS editing effect slider
-                editing_score_input = gr.Slider(
-                    minimum=0,
-                    maximum=3,
-                    step=1,
+                # EMOS editing effect radio buttons
+                editing_score_input = gr.Radio(
+                    choices=[],
+                    value=None,
                     label="Editing Effect Score",
-                    value=1,
-                    visible=False
+                    visible=False,
+                    interactive=True
                 )
                 
                 submit_score = gr.Button("Submit Rating")
@@ -347,7 +406,7 @@ class MOSTest:
                 
                 if prolific_pid_from_url:
                     # PROLIFIC_PID found in URL - hide input section and auto-start
-                    instructions_val, ref_audio, tar_audio, slider_update, transcript_val, transcript_visible, editing_slider_update = self.get_initial_test_updates(new_test_cases)
+                    instructions_val, ref_audio, tar_audio, radio_update, transcript_val, transcript_visible, editing_radio_update = self.get_initial_test_updates(new_test_cases)
                     return (
                         params,  # url_params_state
                         params,  # url_params_display
@@ -359,16 +418,18 @@ class MOSTest:
                         instructions_val,  # instructions
                         ref_audio,  # reference audio
                         tar_audio,  # target audio
-                        slider_update,  # score input slider
+                        radio_update,  # score input radio
                         update(visible=False),  # hide email textbox
                         update(visible=False),   # hide prolific_pid textbox
                         update(visible=transcript_visible),  # emos label visibility
                         update(value=transcript_val, visible=transcript_visible),  # edited transcript
-                        editing_slider_update,  # editing score slider
+                        editing_radio_update,  # editing score radio
                         new_test_cases,  # test_cases_state
                         0,  # current_page_state
                         [],  # results_state
-                        f"Progress: 0/{total_pages} (0%)"  # progress_text
+                        f"Progress: 0/{total_pages} (0%)",  # progress_text
+                        False,  # ref_audio_played_state
+                        False   # target_audio_played_state
                     )
                 else:
                     # No PROLIFIC_PID in URL - show input fields
@@ -383,16 +444,18 @@ class MOSTest:
                         "",  # instructions (empty)
                         None,  # reference audio (empty)
                         None,  # target audio (empty)
-                        update(value=3),  # score input (default value)
+                        update(value=None),  # score input (no default value)
                         update(visible=True),   # show email textbox
                         update(visible=False),   # hide prolific_pid textbox
                         update(visible=False),  # emos label (hidden)
                         update(value="", visible=False),  # edited transcript (hidden)
-                        update(visible=False),  # editing score slider (hidden)
+                        update(visible=False),  # editing score radio (hidden)
                         new_test_cases,  # test_cases_state (still set for when they start)
                         0,  # current_page_state
                         [],  # results_state
-                        f"Progress: 0/{total_pages} (0%)"  # progress_text
+                        f"Progress: 0/{total_pages} (0%)",  # progress_text
+                        False,  # ref_audio_played_state
+                        False   # target_audio_played_state
                     )
 
             def start_test(email_input, pid_input, test_cases):
@@ -421,27 +484,31 @@ class MOSTest:
                 if first_page:
                     ref_audio = first_page.get_reference_audio() if not isinstance(first_page, EMOSPage) else None
                     tar_audio = first_page.get_target_audio()
-                    slider_update = first_page.get_slider_update()
                     instructions = first_page.get_instructions()
+                    
+                    # Get radio button configuration with labels
+                    choices, values, _ = self.create_radio_choices_and_default(first_page)
+                    radio_update = update(choices=choices, value=None, visible=True)
                     
                     # Handle EMOS-specific elements
                     if isinstance(first_page, EMOSPage):
                         transcript_val = first_page.get_edited_transcript()
                         transcript_visible = True
-                        editing_min, editing_max, editing_default = first_page.get_editing_slider_config()
-                        editing_slider_update = update(minimum=editing_min, maximum=editing_max, step=1, value=editing_default, visible=True)
+                        # For EMOS editing, you might need a separate method or handle differently
+                        editing_choices, editing_values, _ = self.create_radio_choices_and_default(first_page, editing=True)
+                        editing_radio_update = update(choices=editing_choices, value=None, visible=True)
                     else:
                         transcript_val = ""
                         transcript_visible = False
-                        editing_slider_update = update(visible=False)
+                        editing_radio_update = update(visible=False)
                 else:
                     ref_audio = None
                     tar_audio = None
-                    slider_update = update()
+                    radio_update = update()
                     instructions = "Error loading test"
                     transcript_val = ""
                     transcript_visible = False
-                    editing_slider_update = update(visible=False)
+                    editing_radio_update = update(visible=False)
                 
                 return (
                     valid_id,
@@ -451,7 +518,7 @@ class MOSTest:
                     instructions,
                     ref_audio,
                     tar_audio,
-                    slider_update,
+                    radio_update,
                     update(visible=transcript_visible),  # emos label visibility
                     update(value=transcript_val, visible=transcript_visible),  # edited transcript
                     0,  # current_page_state (reset to 0)
@@ -477,11 +544,13 @@ class MOSTest:
                     prolific_pid,  # prolific_pid visibility
                     emos_transcript_label,  # EMOS label visibility
                     edited_transcript,  # EMOS transcript
-                    editing_score_input,  # EMOS editing score slider
+                    editing_score_input,  # EMOS editing score radio
                     test_cases_state,  # NEW: test cases for this session
                     current_page_state,  # NEW: current page
                     results_state,  # NEW: results
-                    progress_text  # NEW: progress update
+                    progress_text,  # NEW: progress update
+                    ref_audio_played_state,  # NEW: reference audio played tracking
+                    target_audio_played_state  # NEW: target audio played tracking
                 ]
             )
 
@@ -491,23 +560,41 @@ class MOSTest:
                 outputs=[user_id, id_error, id_input_section, test_interface, instructions, reference, target, score_input, emos_transcript_label, edited_transcript, current_page_state, results_state]
             )
 
-            submit_score.click(
-                self.run_test,
-                inputs=[user_id, score_input, target, editing_score_input, 
-                       test_cases_state, current_page_state, results_state, url_params_state],
-                outputs=[instructions, progress_text, reference, target, score_input, submit_score, redirect, 
-                        emos_transcript_label, edited_transcript, test_cases_state, current_page_state, results_state],
+            # Audio playback tracking - set state to True when audio finishes playing
+            def mark_ref_audio_played():
+                return True
+            
+            def mark_target_audio_played():
+                return True
+
+            reference.stop(
+                mark_ref_audio_played,
+                outputs=[ref_audio_played_state]
             )
             
-            # Update editing slider visibility when instructions change
-            def update_editing_slider(instructions_text):
+            target.stop(
+                mark_target_audio_played,
+                outputs=[target_audio_played_state]
+            )
+
+            submit_score.click(
+                self.run_test,
+                inputs=[user_id, score_input, ref_audio_played_state, target_audio_played_state, editing_score_input, 
+                       test_cases_state, current_page_state, results_state, url_params_state],
+                outputs=[instructions, progress_text, reference, target, score_input, submit_score, redirect, 
+                        emos_transcript_label, edited_transcript, test_cases_state, current_page_state, results_state,
+                        ref_audio_played_state, target_audio_played_state],
+            )
+            
+            # Update editing radio visibility when instructions change
+            def update_editing_radio(instructions_text):
                 if "EMOS" in str(instructions_text):
                     return update(visible=True)
                 else:
                     return update(visible=False)
             
             instructions.change(
-                update_editing_slider,
+                update_editing_radio,
                 inputs=[instructions],
                 outputs=[editing_score_input]
             )
@@ -531,5 +618,5 @@ if __name__ == "__main__":
     interface = test.create_interface()
     interface.launch(
         allowed_paths=[os.getcwd()],
-        share=True,
+        # share=True,
     )
