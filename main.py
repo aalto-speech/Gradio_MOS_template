@@ -623,5 +623,5 @@ if __name__ == "__main__":
     interface = test.create_interface()
     interface.launch(
         allowed_paths=[os.getcwd()],
-        # share=True,
+        share=True,
     )
