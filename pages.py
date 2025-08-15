@@ -19,7 +19,12 @@ class TestPage(ABC):
     
     @abstractmethod
     def get_slider_config(self):
-        """Return slider configuration (min, max, default)"""
+        """Return radio button configuration (min, max, default)"""
+        pass
+
+    @abstractmethod
+    def get_level_label(self):
+        """Return the label for the radio button level"""
         pass
     
     def get_reference_audio(self):
@@ -56,11 +61,16 @@ class SMOSPage(TestPage):
         ### Speaker Similarity Test (SMOS)
         Please rate how similar the voice in the target audio is to the reference audio.
         - Scale: 1-5 (1: Very Different, 5: Very Similar)
-        - Use whole numbers only
+        - The audios are recorded under various conditions, so please focus on the speaker's voice characteristics.
+        - Please finish listening to both audios before submitting your score.
+        - It's very important to trust your first impression and not overthink your answer.
         """
     
     def get_slider_config(self):
         return 1, 5, 3  # min, max, default
+    
+    def get_level_label(self):
+        return ["Very Different", "Different", "Slightly Different", "Similar", "Very Similar"]
 
 
 class SMOSInstructionPage(SMOSPage):
@@ -73,8 +83,10 @@ class SMOSInstructionPage(SMOSPage):
         
         Please rate how similar the voice in the target audio is to the reference audio.
         - Scale: 1-5 (1: Very Different, 5: Very Similar)
+        - The audios are recorded under various conditions, so please focus on the speaker's voice characteristics.
+        - Please finish listening to both audios before submitting your score.
+        - It's very important to trust your first impression and not overthink your answer.
         - **For this instruction example, you should give a score of 5 since it's the same speaker**
-        - Use whole numbers only
         """
 
 class NMOSPage(NoReferencePage):
@@ -85,11 +97,16 @@ class NMOSPage(NoReferencePage):
         ### Speech Naturalness Test (NMOS)
         Please rate how natural the voice in the target audio.
         - Scale: 1-5 (1: very unnatural, 2: unnatural, 3: slightly unnatural, 4: natural, 5: very natural)
-        - Use whole numbers only
+        - The audios are recorded under various conditions, so please focus on how the voice sound like a natural human voice.
+        - Please finish listening the given audio before submitting your score.
+        - It's very important to trust your first impression and not overthink your answer.
         """
     
     def get_slider_config(self):
         return 1, 5, 3  # min, max, default
+    
+    def get_level_label(self):
+        return ["Very Unnatural", "Unnatural", "Slightly Unnatural", "Natural", "Very Natural"]
 
 
 class NMOSInstructionPage(NMOSPage):
@@ -102,8 +119,10 @@ class NMOSInstructionPage(NMOSPage):
         
         Please rate how similar the voice in the target audio is to the reference audio.
         - Scale: 1-5 (1: very unnatural, 2: unnatural, 3: slightly unnatural, 4: natural, 5: very natural)
+        - The audios are recorded under various conditions, so please focus on how the voice sound like a natural human voice.
+        - Please finish listening the given audio before submitting your score.
+        - It's very important to trust your first impression and not overthink your answer.
         - **For this instruction example, you should give a score of 5 since it's a natural speech**
-        - Use whole numbers only
         """
 
 class QMOSPage(NoReferencePage):
@@ -114,7 +133,8 @@ class QMOSPage(NoReferencePage):
         ### Speech Quality Test (QMOS)
         Please rate the quality of the target audio.
         - Scale: 1-5 (1: very bad, 2: bad, 3: ok, 4: good, 5: very good)
-        - Use whole numbers only
+        - Please finish listening the given audio before submitting your score.
+        - It's very important to trust your first impression and not overthink your answer.
         Please consider the following aspect for your rating:
         1. Rate how pleasant the speech sounds to your ear.
         2. Are there any audio artefacts, such as background noise, crackling, echo, volume inconsistencies, or digital distortions.
@@ -123,6 +143,9 @@ class QMOSPage(NoReferencePage):
     
     def get_slider_config(self):
         return 1, 5, 3  # min, max, default
+    
+    def get_level_label(self):
+        return ["Very Bad", "Bad", "Ok", "Good", "Very Good"]
 
 
 class QMOSInstructionPage(QMOSPage):
@@ -135,8 +158,9 @@ class QMOSInstructionPage(QMOSPage):
         
         Please rate the quality of the target audio.
         - Scale: 1-5 (1: very bad, 2: bad, 3: ok, 4: good, 5: very good)
+        - Please finish listening the given audio before submitting your score.
+        - It's very important to trust your first impression and not overthink your answer.
         - **For this instruction example, you should give a score of 5 since it's a high-quality speech**
-        - Use whole numbers only
         When evaluating the quality of the speech, please consider the following aspect for your rating:
         1. How pleasant the speech sounds to your ear.
         2. Are there any audio artefacts, such as background noise, crackling, echo, volume inconsistencies, or digital distortions.
@@ -150,15 +174,25 @@ class CMOSPage(TestPage):
     def get_instructions(self):
         return """
         ### Comparative Mean Opinion Score Test (CMOS)
-        Please compare the naturalness of the sample B against the sample A.
+        Please compare how human-sounded of the sample B against the sample A.
         - Scale: -3 to +3
-        - Negative: Sample A is better
-        - Positive: Sample B is better
+        - Negative: Sample A is more human-sounded
+        - Positive: Sample B is more human-sounded
         - 0: Equal quality
+        Tips:
+        - The audios are recorded under various conditions and are speak in different speaking style, so please focus on how the voice sound like a natural human voice.
+        - Please finish listening the given audio before submitting your score.
+        - It's very important to trust your first impression and not overthink your answer.
         """
     
     def get_slider_config(self):
         return -3, 3, 0
+    
+    def get_level_label(self):
+        return ["Sample A is much better", "Sample A is better",
+                "Sample A is slightly better", "Equal quality",
+                "Sample B is slightly better", "Sample B is better",
+                "Sample B is much better"]
 
 
 class CMOSInstructionPage(CMOSPage):
@@ -166,14 +200,18 @@ class CMOSInstructionPage(CMOSPage):
     
     def get_instructions(self):
         return """
-        ### Comparative Mean Opinion Score Test - Instruction (CMOS)
-        **This is an instruction example where both audios are natural speech with equal quality.**
-        
-        Please compare the naturalness of the sample B against the sample A.
+        ### Comparative Mean Opinion Score Test (CMOS)
+        Please compare how human-sounded of the sample B against the sample A.
         - Scale: -3 to +3
-        - Negative: Sample A is better
-        - Positive: Sample B is better
+        - Negative: Sample A is more human-sounded
+        - Positive: Sample B is more human-sounded
+        - 0: Equal quality
         - **For this instruction example, you should give a score of 0 since both are natural speech with equal quality**
+
+        Tips:
+        - The audios are recorded under various conditions and are speak in different speaking style, so please focus on how the voice sound like a natural human voice.
+        - Please finish listening the given audio before submitting your score.
+        - It's very important to trust your first impression and not overthink your answer.
         """
 
 
@@ -190,6 +228,9 @@ class AttentionPage(TestPage):
     
     def get_slider_config(self):
         return 1, 5, 3
+    
+    def get_level_label(self):
+        return ["Very Bad", "Bad", "Ok", "Good", "Very Good"]
 
 
 class EMOSPage(NoReferencePage):
@@ -207,7 +248,7 @@ class EMOSPage(NoReferencePage):
         **Instructions:**
         1. Read the edited transcript below
         2. Listen to the edited speech
-        3. Rate the naturalness of the speech (1-5 scale)
+        3. Rate how natural (**human-sounded**) of the speech (1-5 scale)
         4. Rate how well the editing is reflected in the speech (0-3 scale)
         
         **Naturalness Scale:**
@@ -226,6 +267,15 @@ class EMOSPage(NoReferencePage):
     
     def get_editing_slider_config(self):
         return 0, 3, 1  # editing effect slider: min, max, default
+    
+    def get_level_label(self):
+        return ["Very Unnatural", "Unnatural", "Slightly Unnatural", "Natural", "Very Natural"]
+    
+    def get_editing_level_label(self):
+        return ["The speech doesn't reflect the editing",
+                "Some editing is reflected",
+                "Most of the editing is reflected",
+                "All editing is reflected"]
     
     def get_edited_transcript(self):
         return self.edited_transcript
