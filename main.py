@@ -370,11 +370,17 @@ class MOSTest:
                         label="Reference Audio",
                         interactive=False,
                         streaming=True,
+                        show_download_button=False,
+                        show_share_button=False,
+                        editable=False,
                     )
                     target = gr.Audio(
                         label="Target Audio",
                         interactive=False,
                         streaming=True,
+                        show_download_button=False,
+                        show_share_button=False,
+                        editable=False,
                     )
                 
                 # Replace slider with radio buttons for score input
@@ -623,5 +629,5 @@ if __name__ == "__main__":
     interface = test.create_interface()
     interface.launch(
         allowed_paths=[os.getcwd()],
-        share=True,
+        # share=True,
     )
