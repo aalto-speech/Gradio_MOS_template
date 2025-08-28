@@ -370,11 +370,17 @@ class MOSTest:
                         label="Reference Audio",
                         interactive=False,
                         streaming=True,
+                        show_download_button=False,
+                        show_share_button=False,
+                        editable=False,
                     )
                     target = gr.Audio(
                         label="Target Audio",
                         interactive=False,
                         streaming=True,
+                        show_download_button=False,
+                        show_share_button=False,
+                        editable=False,
                     )
                 
                 # Replace slider with radio buttons for score input
@@ -622,6 +628,10 @@ if __name__ == "__main__":
     test = MOSTest(case_sampler=sampler)
     interface = test.create_interface()
     interface.launch(
-        allowed_paths=[os.getcwd()],
-        share=True,
+        server_name="127.0.0.1",      # bind locally; Caddy proxies
+        server_port=52705,            # must match Caddy upstream
+        root_path="/mos",             # app lives at https://<domain>/mos/...
+        share=False,                  # no public tunnel
+        show_error=True,
+        allowed_paths=[os.getcwd()]   # serve ./audios, ./results, etc.
     )
