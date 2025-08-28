@@ -628,6 +628,10 @@ if __name__ == "__main__":
     test = MOSTest(case_sampler=sampler)
     interface = test.create_interface()
     interface.launch(
-        allowed_paths=[os.getcwd()],
-        # share=True,
+        server_name="127.0.0.1",      # bind locally; Caddy proxies
+        server_port=52705,            # must match Caddy upstream
+        root_path="/mos",             # app lives at https://<domain>/mos/...
+        share=False,                  # no public tunnel
+        show_error=True,
+        allowed_paths=[os.getcwd()]   # serve ./audios, ./results, etc.
     )
