@@ -5,14 +5,14 @@ root_dir:
 systems:
   - Matcha-TTS
   - F5TTS_v1_Base
-  - original_finnish
-  - tts_finnish
+  - original_swedish
+  - tts_swedish
   - prompt_speech
   - target_speech
 tests:
   CMOS:
-    # - ref: original_finnish
-    #   target: tts_finnish
+    # - ref: original_swedish
+    #   target: tts_swedish
     - ref: target_speech
       target: Matcha-TTS
     - ref: target_speech
@@ -20,7 +20,7 @@ tests:
   SMOS:
     - ref: prompt_speech
       target: Matcha-TTS
-      metalst: test_list_builders/metalst/perso_eval.meta.lst
+      metalst: test_list_builders/metalst/sv_cv_eval.meta.lst
     - ref: prompt_speech
       target: F5TTS_v1_Base
-      metalst: test_list_builders/metalst/perso_eval.meta.lst
+      metalst: test_list_builders/metalst/sv_cv_eval.meta.lst

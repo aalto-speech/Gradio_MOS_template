@@ -18,7 +18,7 @@ class TTSLocalTestGenerator:
         """Initialize the local filesystem test generator"""
         self.audio_extensions = {'.wav', '.mp3', '.m4a', '.flac', '.ogg', '.aac'}
     
-    def _get_audio_files(self, folder_path: Path, system_name: str, root_path: Path) -> List[Dict[str, str]]:
+    def _get_audio_files(self, folder_path: Path, system_name: str, root_path: Path, relative_root: str) -> List[Dict[str, str]]:
         """Get all audio files from a local folder and include system and path information"""
         
         print(f"Scanning folder: {folder_path}")
@@ -48,7 +48,7 @@ class TTSLocalTestGenerator:
                         'name': file_path.name,
                         'local_path': str(file_path),
                         'system': system_name,
-                        'complete_path': complete_path
+                        'complete_path': f"{relative_root}/{complete_path}"
                     })
         except PermissionError:
             print(f"Warning: Permission denied accessing {folder_path}")
@@ -108,13 +108,13 @@ class TTSLocalTestGenerator:
                     continue
                 
                 pairs_for_this_comparison.append({
-                    "reference": ref_file['local_path'],
-                    "target": target_file['local_path'],
+                    "reference": ref_file['complete_path'],
+                    "target": target_file['complete_path'],
                     "type": "CMOS",
                     "ref_system": ref_system,
                     "target_system": target_system,
-                    "ref_filename": ref_file['complete_path'],
-                    "target_filename": target_file['complete_path']
+                    "ref_filename": ref_file['local_path'],
+                    "target_filename": target_file['local_path']
                 })
                 pairs_generated += 1
             
@@ -157,8 +157,8 @@ class TTSLocalTestGenerator:
                 continue
             
             # Create filename lookup dictionaries for faster searching
-            ref_files_dict = {file['name']: file for file in ref_files}
-            target_files_dict = {file['name']: file for file in target_files}
+            ref_files_dict = {file['name'].split('.')[0]: file for file in ref_files}
+            target_files_dict = {file['name'].split('.')[0]: file for file in target_files}
             
             # Generate pairs for this specific comparison
             pairs_for_this_comparison = []
@@ -183,8 +183,8 @@ class TTSLocalTestGenerator:
                         print(f"Warning: Line {line_num} in {metalst_path} has fewer than 4 fields, skipping")
                         continue
                     
-                    ref_filename = os.path.basename(fields[0])
-                    target_filename = os.path.basename(fields[3])
+                    ref_filename = os.path.splitext(os.path.basename(fields[0]))[0]
+                    target_filename = os.path.splitext(os.path.basename(fields[3]))[0]
                     
                     # Find the reference file
                     if ref_filename not in ref_files_dict:
@@ -200,13 +200,13 @@ class TTSLocalTestGenerator:
                     target_file = target_files_dict[target_filename]
                                         
                     pairs_for_this_comparison.append({
-                        "reference": ref_file['local_path'],
-                        "target": target_file['local_path'],
+                        "reference": ref_file['complete_path'],
+                        "target": target_file['complete_path'],
                         "type": "SMOS",
                         "ref_system": ref_system,
                         "target_system": target_system,
-                        "ref_filename": ref_file['complete_path'],
-                        "target_filename": target_file['complete_path'],
+                        "ref_filename": ref_file['local_path'],
+                        "target_filename": target_file['local_path'],
                         "metalst_line": line_num
                     })
                     pairs_generated += 1
@@ -307,7 +307,7 @@ class TTSLocalTestGenerator:
         for system in config['systems']:
             try:
                 system_path = root_path / system
-                files = self._get_audio_files(system_path, system, root_path)
+                files = self._get_audio_files(system_path, system, root_path, relative_root=config['root_dir'])
                 system_files[system] = files
                 print(f"Found {len(files)} audio files in {system}")
             except Exception as e:

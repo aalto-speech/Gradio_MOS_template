@@ -5,3 +5,5 @@ test_list_builders/google_drive/credentials/*
 test_lists/
 outputs/
 .gradio/
+test_audios
+test_audios_mp3

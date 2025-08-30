@@ -622,8 +622,8 @@ class MOSTest:
 
 if __name__ == "__main__":
     sampler = TestCasesSampler(
-        './test_lists/test_list_webhome_Finnish.json',
-        sample_size_per_test=4,
+        './test_lists/swedish_localfile_mp3.json',
+        sample_size_per_test=2,
     )
     test = MOSTest(case_sampler=sampler)
     interface = test.create_interface()
