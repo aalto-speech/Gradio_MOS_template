@@ -61,7 +61,10 @@ class SMOSInstructionPage(SMOSPage):
         - 2 - Sama puhuja
 
         Luota ensivaikutelmaasi äläkä mieti päätöstäsi liikaa.
+
         Käytä "En osaa sanoa" -vaihtoehtoa vain satunnaisesti, jos et todella kallistu kumpaankaan suuntaan.
+
+        **Tämä on ohjekysymys. Sinun tulisi arvioida tämä kysymys arvosanalla 2 - Sama puhuja, koska sekä äänellä A että äänellä B on sama kaiutin.**
         """
 
 
@@ -126,6 +129,8 @@ class CMOSInstructionPage(CMOSPage):
         - 3 - Ääni B kuulostaa paljon enemmän ihmisen kaltaiselta
 
         Kuuntele molemmat ääninäytteet kokonaan ennen arviosi antamista. Luota ensivaikutelmaasi äläkä mieti päätöstäsi liikaa. Käytä "0" -vaihtoehtoa vain satunnaisesti, jos et todella löydä eroa kahden näytteen välillä.
+
+        **Tämä on ohjekysymys. Sinun tulisi arvioida tämä kysymys arvosanalla 0 - Molemmat kuulostavat yhtä ihmisiltä, koska sekä ääni A että ääni B ovat ihmisen tuottamia.**
         """
 
 

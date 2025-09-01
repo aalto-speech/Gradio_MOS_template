@@ -64,8 +64,11 @@ class SMOSInstructionPage(SMOSPage):
         - 1 - troligen samma talare 
         - 2 - samma talare
 
-        Det är viktigt att du litar på ditt första intryck och inte övertänker ditt beslut. 
+        Det är viktigt att du litar på ditt första intryck och inte övertänker ditt beslut.
+
         Använd bara "osäker" undantagsvis, då du verkligen inte lutar åt något håll alls.
+
+        **Detta är en riktlinjefråga. Du bör betygsätta frågan med poängen 2 - Samma talare eftersom både ljud A och ljud B kommer från samma talare.**
         """
 
 
@@ -136,8 +139,12 @@ class CMOSInstructionPage(CMOSPage):
         - 3 - Audio B är mycket mer människolik
 
         Lyssna genom båda ljudexemplen helt och hållet innan du ger ditt omdöme.
-        Det är viktigt att du litar på ditt första intryck och inte övertänker ditt beslut. 
+
+        Det är viktigt att du litar på ditt första intryck och inte övertänker ditt beslut.
+
         Använd bara "lika" undantagsvis, då du verkligen inte lutar åt något håll alls.
+
+        **Detta är en riktlinjefråga. Du bör betygsätta frågan med poängen 0 - De låter lika människolika eftersom både ljud A och ljud B produceras av människor.**
         """
 
 
