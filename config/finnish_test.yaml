@@ -1,0 +1,47 @@
+sampler:
+  test_list_path: test_lists/finnish_localfile_mp3.json
+  sample_size_per_test: 
+gradio:
+  server_name: 127.0.0.1
+  server_port: 52705
+  root_path: /mos
+  share: false
+  show_error: true
+  allowed_paths:
+    - cwd
+attention_checks:
+  - type: "attention"
+    reference: audios/attention_check_swedish/-3.mp3
+    target: audios/attention_check_swedish/-3.mp3
+  - type: "attention"
+    reference: audios/attention_check_swedish/-2.mp3
+    target: audios/attention_check_swedish/-2.mp3
+  - type: "attention"
+    reference: audios/attention_check_swedish/-1.mp3
+    target: audios/attention_check_swedish/-1.mp3
+  - type: "attention"
+    reference: audios/attention_check_swedish/0.mp3
+    target: audios/attention_check_swedish/0.mp3
+  - type: "attention"
+    reference: audios/attention_check_swedish/1.mp3
+    target: audios/attention_check_swedish/1.mp3
+  - type: "attention"
+    reference: audios/attention_check_swedish/2.mp3
+    target: audios/attention_check_swedish/2.mp3
+  - type: "attention"
+    reference: audios/attention_check_swedish/3.mp3
+    target: audios/attention_check_swedish/3.mp3
+
+instructions:
+  - type: "cmos_instruction"
+    reference: test_audios_mp3/icassp_mos_fi/prompt_speech/01_rich_0014.mp3
+    target: test_audios_mp3/icassp_mos_fi/prompt_speech/21m_rich_0014.mp3
+  - type: "smos_instruction"
+    reference: test_audios_mp3/icassp_mos_fi/prompt_speech/02m_rich_0058.mp3
+    target: test_audios_mp3/icassp_mos_fi/prompt_speech/02m_rich_0087.mp3
+
+language: finnish
+
+hydra:
+  run:
+    dir: ./test_${language}/${now:%Y-%m-%d}/${now:%H-%M-%S}

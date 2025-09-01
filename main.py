@@ -11,38 +11,21 @@ from omegaconf import DictConfig
 from utils import is_valid_email, TestCasesSampler
 from importlib import import_module
 
-# from pages.english import PageFactory, EMOSPage, CMOSPage
 
 class MOSTest:
-    def __init__(self, case_sampler: TestCasesSampler, page_module):
+    def __init__(
+            self, 
+            case_sampler: TestCasesSampler, 
+            page_module, 
+            attention_checks: List[dict], 
+            instruction_pages: List[dict]
+        ):
         # Keep the structure of test_cases as a list
         self.case_sampler = case_sampler
 
         # Add attention check cases
-        self.attention_checks = [
-            {
-                "type": 'attention',
-                'reference': 'audios/attention_high.wav',
-                'target': 'audios/attention_high.wav'
-            },
-            {
-                "type": 'attention',
-                'reference': 'audios/attention_high.wav',
-                'target': 'audios/attention_high.wav'
-            },
-        ]
-        self.instruction_pages = [
-            {
-                "type": "cmos_instruction",
-                "reference": "audios/4.wav",
-                "target": "audios/4.wav"
-            },
-            {
-                "type": "smos_instruction",
-                "reference": "audios/1.wav",
-                "target": "audios/1.wav"
-            },
-        ]
+        self.attention_checks = attention_checks
+        self.instruction_pages = instruction_pages
 
         self.PageFactory = getattr(page_module, "PageFactory")
         self.EMOSPage = getattr(page_module, "EMOSPage")
@@ -55,10 +38,12 @@ class MOSTest:
         for _, cases in questions.items():
             random.shuffle(cases)
             test_cases.extend(cases)
+
+        num_attention = len(test_cases) // self.case_sampler.sample_size_per_test
         
-        for attention_check in self.attention_checks:
+        for attention_check in random.sample(self.attention_checks, num_attention):
             test_cases.insert(
-                random.randint(int(0.25 * len(test_cases)), int(0.9 * len(test_cases))), 
+                random.randint(int(0.25 * len(test_cases)), int(0.95 * len(test_cases))), 
                 attention_check
             )
         test_cases = self.instruction_pages + test_cases
@@ -629,7 +614,7 @@ class MOSTest:
 
         return interface
     
-@hydra.main(version_base=None, config_path="config", config_name="default")
+@hydra.main(version_base=None, config_path="config")
 def main(cfg: DictConfig) -> None:
     """Functional approach to main"""
 
@@ -645,7 +630,12 @@ def main(cfg: DictConfig) -> None:
     )
     
     # Create test
-    test = MOSTest(case_sampler=sampler, page_module=pages)
+    test = MOSTest(
+        case_sampler=sampler,
+        page_module=pages,
+        attention_checks=cfg.attention_checks,
+        instruction_pages=cfg.instructions,
+    )
     
     # Create and launch interface
     interface = test.create_interface()

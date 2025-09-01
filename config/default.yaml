@@ -10,8 +10,24 @@ gradio:
   allowed_paths:
     - cwd
 
+attention_check:
+  - type: 'attention'
+    reference: 'audios/attention_high.wav'
+    target: 'audios/attention_high.wav'
+  - type: 'attention'
+    reference: 'audios/attention_high.wav'
+    target: 'audios/attention_high.wav'
+
+instructions:
+  - type: "cmos_instruction"
+    reference: "audios/4.wav"
+    target: "audios/4.wav"
+  - type: "smos_instruction"
+    reference: "audios/1.wav"
+    target: "audios/1.wav"
+
 language: english
 
 hydra:
   run:
-    dir: ./test_logs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: ./test_${language}/${now:%Y-%m-%d}/${now:%H-%M-%S}
