@@ -153,9 +153,11 @@ class AttentionPage(CMOSPage):
     
     def get_instructions(self):
         return """
-        ### Uppmärksamhetstest
+        ### Uppmärksamhettest
 
-        Både referens- och målljuden är identiska, de är instruktioner till dig om hur du ska betygsätta denna fråga.
+        Båda ljden är identiska här, och innehåller en instruktion om hur du ska svara på frågan.
+
+        Följ instruktionen när du väljer vad du ska kryssa i.
 
         Använd denna 7-gradiga skala för din bedömning:
 
@@ -167,7 +169,7 @@ class AttentionPage(CMOSPage):
         - 2 - Audio B är mer människolik
         - 3 - Audio B är mycket mer människolik
 
-        Även om ljuden är identiska, **vänligen lyssna klart på båda ljuden innan du skickar in dina svar.**
+        Trots att filerna är identiska ska du **lyssna igenom båda filerna helt**
         """
 
 

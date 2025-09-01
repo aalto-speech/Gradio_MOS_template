@@ -11,26 +11,26 @@ gradio:
     - cwd
 attention_checks:
   - type: "attention"
-    reference: audios/attention_check_finnish/-3.mp3
-    target: audios/attention_check_finnish/-3.mp3
+    reference: audios/attention_check_finnish/human-likeness-cmos/attention_check_fin_-3.mp3
+    target: audios/attention_check_finnish/human-likeness-cmos/attention_check_fin_-3.mp3
   - type: "attention"
-    reference: audios/attention_check_finnish/-2.mp3
-    target: audios/attention_check_finnish/-2.mp3
+    reference: audios/attention_check_finnish/human-likeness-cmos/attention_check_fin_-2.mp3
+    target: audios/attention_check_finnish/human-likeness-cmos/attention_check_fin_-2.mp3
   - type: "attention"
-    reference: audios/attention_check_finnish/-1.mp3
-    target: audios/attention_check_finnish/-1.mp3
+    reference: audios/attention_check_finnish/human-likeness-cmos/attention_check_fin_-1.mp3
+    target: audios/attention_check_finnish/human-likeness-cmos/attention_check_fin_-1.mp3
   - type: "attention"
-    reference: audios/attention_check_finnish/0.mp3
-    target: audios/attention_check_finnish/0.mp3
+    reference: audios/attention_check_finnish/human-likeness-cmos/attention_check_fin_0.mp3
+    target: audios/attention_check_finnish/human-likeness-cmos/attention_check_fin_0.mp3
   - type: "attention"
-    reference: audios/attention_check_finnish/1.mp3
-    target: audios/attention_check_finnish/1.mp3
+    reference: audios/attention_check_finnish/human-likeness-cmos/attention_check_fin_1.mp3
+    target: audios/attention_check_finnish/human-likeness-cmos/attention_check_fin_1.mp3
   - type: "attention"
-    reference: audios/attention_check_finnish/2.mp3
-    target: audios/attention_check_finnish/2.mp3
+    reference: audios/attention_check_finnish/human-likeness-cmos/attention_check_fin_2.mp3
+    target: audios/attention_check_finnish/human-likeness-cmos/attention_check_fin_2.mp3
   - type: "attention"
-    reference: audios/attention_check_finnish/3.mp3
-    target: audios/attention_check_finnish/3.mp3
+    reference: audios/attention_check_finnish/human-likeness-cmos/attention_check_fin_3.mp3
+    target: audios/attention_check_finnish/human-likeness-cmos/attention_check_fin_3.mp3
 
 instructions:
   - type: "cmos_instruction"

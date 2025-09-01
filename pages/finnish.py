@@ -141,10 +141,10 @@ class AttentionPage(CMOSPage):
     def get_instructions(self):
         return """
         ### Huomiotarkistus
-        Sekä viite- että kohdeäänitteet ovat identtisiä, ne ovat ohjeita sinulle tämän kysymyksen arvioimiseksi.
+
+        Molemmat äänitteet ovat identtisiä ja ne sisältävät ohjeita tämän kysymyksen arvioimiseksi.
 
         Käytä seuraavaa 7-portaista asteikkoa arvioinnissasi:
-
         - -3 - Ääni A kuulostaa paljon enemmän ihmisen kaltaiselta
         - -2 - Ääni A kuulostaa enemmän ihmisen kaltaiselta
         - -1 - Ääni A kuulostaa hieman enemmän ihmisen kaltaiselta

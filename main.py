@@ -304,8 +304,8 @@ class MOSTest:
         return (
             update(value=instructions),
             progress,
-            update(value=ref_audio, label='sample A' if isinstance(next_page, self.CMOSPage) else 'Reference'),
-            update(value=tar_audio, label='sample B' if isinstance(next_page, self.CMOSPage) else 'Target'),
+            update(value=ref_audio, label='sample A'),
+            update(value=tar_audio, label='sample B'),
             radio_update,
             submit_score,
             redirect,
