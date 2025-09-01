@@ -28,14 +28,14 @@ class MOSTest:
         ]
         self.instruction_pages = [
             {
-                "type": "smos_instruction",
-                "reference": "audios/1.wav",
-                "target": "audios/1.wav"
-            },
-            {
                 "type": "cmos_instruction",
                 "reference": "audios/4.wav",
                 "target": "audios/4.wav"
+            },
+            {
+                "type": "smos_instruction",
+                "reference": "audios/1.wav",
+                "target": "audios/1.wav"
             },
         ]
 

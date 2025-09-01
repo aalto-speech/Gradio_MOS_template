@@ -78,7 +78,7 @@ class SMOSInstructionPage(SMOSPage):
     
     def get_instructions(self):
         return """
-        ### Speaker Similarity Test - Instruction (SMOS)
+        ### Speaker Similarity Test (SMOS) - **Instruction**
         **This is an instruction example where both audios are from the same speaker with different content.**
         
         Please rate how similar the voice in the target audio is to the reference audio.
@@ -201,7 +201,7 @@ class CMOSInstructionPage(CMOSPage):
     
     def get_instructions(self):
         return """
-        ### Comparative Mean Opinion Score Test (CMOS)
+        ### Comparative Mean Opinion Score Test (CMOS) - **Instruction**
         Please compare how human-sounded of the sample B against the sample A.
         - Scale: -3 to +3
         - Negative: Sample A is more human-sounded
@@ -216,23 +216,20 @@ class CMOSInstructionPage(CMOSPage):
         """
 
 
-class AttentionPage(TestPage):
+class AttentionPage(CMOSPage):
     """Attention check page"""
     
     def get_instructions(self):
         return """
         ### Attention Check
-        Both the reference and target audios are identical.
-        Please rate as the instruction instructed.
-        - Scale: 1-5
-        Even though the audios are identical, please finish listening both audios before submit your answers.
+        Both the reference and target audios are identical, they are instructions to you on how to rate this question.
+
+        Please rate as the audio instructed.
+        - Scale: -3 to 3
+
+        Even though the audios are identical, **please finish listening both audios before submit your answers.**
         """
-    
-    def get_slider_config(self):
-        return 1, 5, 3
-    
-    def get_level_label(self):
-        return ["Very Bad", "Bad", "Ok", "Good", "Very Good"]
+
 
 
 class EMOSPage(NoReferencePage):
