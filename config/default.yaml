@@ -1,0 +1,17 @@
+sampler:
+  test_list_path:
+  sample_size_per_test: 
+gradio:
+  server_name: 127.0.0.1
+  server_port: 52705
+  root_path: /mos
+  share: false
+  show_error: true
+  allowed_paths:
+    - cwd
+
+language: english
+
+hydra:
+  run:
+    dir: ./test_logs/${now:%Y-%m-%d}/${now:%H-%M-%S}
