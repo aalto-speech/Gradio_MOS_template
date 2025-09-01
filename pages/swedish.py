@@ -153,13 +153,21 @@ class AttentionPage(CMOSPage):
     
     def get_instructions(self):
         return """
-        ### Attention Check
-        Both the reference and target audios are identical, they are instructions to you on how to rate this question.
+        ### Uppmärksamhetstest
 
-        Please rate as the audio instructed.
-        - Scale: -3 to 3
+        Både referens- och målljuden är identiska, de är instruktioner till dig om hur du ska betygsätta denna fråga.
 
-        Even though the audios are identical, **please finish listening both audios before submit your answers.**
+        Använd denna 7-gradiga skala för din bedömning:
+
+        - -3 - Audio A är mycket mer människolik
+        - -2 - Audio A är mer människolik
+        - -1 - Audio A är lite mer människolik
+        - 0 - De låter lika människolika
+        - 1 - Audio B är lite mer människolik
+        - 2 - Audio B är mer människolik
+        - 3 - Audio B är mycket mer människolik
+
+        Även om ljuden är identiska, **vänligen lyssna klart på båda ljuden innan du skickar in dina svar.**
         """
 
 

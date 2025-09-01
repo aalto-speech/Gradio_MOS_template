@@ -120,6 +120,7 @@ class CMOSInstructionPage(CMOSPage):
         Ääninäytteet on voitu tallentaa eri olosuhteissa tai tuottaa eri tekniikoilla, ja ne voivat sisältää erilaisia puhetyylejä. Keskity puheäänen ominaisuuksiin, äläkä kiinnitä huomiota taustameluun, tallennuslaatuun tai sisältöön.
 
         Käytä seuraavaa 7-portaista asteikkoa arvioinnissasi:
+        
         - -3 - Ääni A kuulostaa paljon enemmän ihmisen kaltaiselta
         - -2 - Ääni A kuulostaa enemmän ihmisen kaltaiselta
         - -1 - Ääni A kuulostaa hieman enemmän ihmisen kaltaiselta
@@ -139,13 +140,20 @@ class AttentionPage(CMOSPage):
     
     def get_instructions(self):
         return """
-        ### Attention Check
-        Both the reference and target audios are identical, they are instructions to you on how to rate this question.
+        ### Huomiotarkistus
+        Sekä viite- että kohdeäänitteet ovat identtisiä, ne ovat ohjeita sinulle tämän kysymyksen arvioimiseksi.
 
-        Please rate as the audio instructed.
-        - Scale: -3 to 3
+        Käytä seuraavaa 7-portaista asteikkoa arvioinnissasi:
 
-        Even though the audios are identical, **please finish listening both audios before submit your answers.**
+        - -3 - Ääni A kuulostaa paljon enemmän ihmisen kaltaiselta
+        - -2 - Ääni A kuulostaa enemmän ihmisen kaltaiselta
+        - -1 - Ääni A kuulostaa hieman enemmän ihmisen kaltaiselta
+        - 0 - Molemmat kuulostavat yhtä ihmisen kaltaisilta
+        - 1 - Ääni B kuulostaa hieman enemmän ihmisen kaltaiselta
+        - 2 - Ääni B kuulostaa enemmän ihmisen kaltaiselta
+        - 3 - Ääni B kuulostaa paljon enemmän ihmisen kaltaiselta
+
+        Vaikka äänitteet ovat identtiset, **kuuntele molemmat äänitteet loppuun ennen vastaustesi lähettämistä.**
         """
 
 
