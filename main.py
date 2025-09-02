@@ -1,43 +1,35 @@
+from pathlib import Path
 import gradio as gr
 import json
 import os
 import random
 from typing import List
 from gradio import update
+import hydra
+from omegaconf import DictConfig
 
 from utils import is_valid_email, TestCasesSampler
-from pages import PageFactory, EMOSPage, CMOSPage
+from importlib import import_module
+
 
 class MOSTest:
-    def __init__(self, case_sampler: TestCasesSampler):
+    def __init__(
+            self, 
+            case_sampler: TestCasesSampler, 
+            page_module, 
+            attention_checks: List[dict], 
+            instruction_pages: List[dict]
+        ):
         # Keep the structure of test_cases as a list
         self.case_sampler = case_sampler
 
         # Add attention check cases
-        self.attention_checks = [
-            {
-                "type": 'attention',
-                'reference': 'audios/attention_high.wav',
-                'target': 'audios/attention_high.wav'
-            },
-            {
-                "type": 'attention',
-                'reference': 'audios/attention_high.wav',
-                'target': 'audios/attention_high.wav'
-            },
-        ]
-        self.instruction_pages = [
-            {
-                "type": "cmos_instruction",
-                "reference": "audios/4.wav",
-                "target": "audios/4.wav"
-            },
-            {
-                "type": "smos_instruction",
-                "reference": "audios/1.wav",
-                "target": "audios/1.wav"
-            },
-        ]
+        self.attention_checks = attention_checks
+        self.instruction_pages = instruction_pages
+
+        self.PageFactory = getattr(page_module, "PageFactory")
+        self.EMOSPage = getattr(page_module, "EMOSPage")
+        self.CMOSPage = getattr(page_module, "CMOSPage")
 
     def sample_test_cases_for_session(self):
         """Sample new test cases for each session"""
@@ -46,10 +38,12 @@ class MOSTest:
         for _, cases in questions.items():
             random.shuffle(cases)
             test_cases.extend(cases)
+
+        num_attention = len(test_cases) // self.case_sampler.sample_size_per_test
         
-        for attention_check in self.attention_checks:
+        for attention_check in random.sample(self.attention_checks, num_attention):
             test_cases.insert(
-                random.randint(int(0.25 * len(test_cases)), int(0.9 * len(test_cases))), 
+                random.randint(int(0.25 * len(test_cases)), int(0.95 * len(test_cases))), 
                 attention_check
             )
         test_cases = self.instruction_pages + test_cases
@@ -69,7 +63,7 @@ class MOSTest:
         """Get the current test page object"""
         if current_page < len(test_cases):
             test_case = test_cases[current_page]
-            return PageFactory.create_page(test_case)
+            return self.PageFactory.create_page(test_case)
         return None
 
     def create_radio_choices_and_default(self, page_obj, editing=False):
@@ -109,7 +103,7 @@ class MOSTest:
             radio_update = update(choices=choices, value=None, visible=True)
             
             # Handle EMOS-specific elements
-            if isinstance(page, EMOSPage):
+            if isinstance(page, self.EMOSPage):
                 transcript = page.get_edited_transcript()
                 transcript_visible = True
                 # For EMOS editing score, we need to create a temporary page object or handle differently
@@ -159,7 +153,7 @@ class MOSTest:
         
         # Get current page to check requirements
         current_page_obj = self.get_current_page(test_cases, current_page)
-        needs_reference = not isinstance(current_page_obj, EMOSPage) and current_page_obj.get_reference_audio() is not None
+        needs_reference = not isinstance(current_page_obj, self.EMOSPage) and current_page_obj.get_reference_audio() is not None
         
         # Check that required audios were played
         if not target_audio_played:
@@ -209,7 +203,7 @@ class MOSTest:
         }
         
         # Add editing score and transcript for EMOS tests
-        if isinstance(current_page_obj, EMOSPage):
+        if isinstance(current_page_obj, self.EMOSPage):
             result_entry["naturalness_score"] = naturalness_score_int
             result_entry["editing_score"] = editing_score_int
             result_entry["edited_transcript"] = current_page_obj.get_edited_transcript()
@@ -281,7 +275,7 @@ class MOSTest:
         next_page = self.get_current_page(test_cases, current_page)
         if next_page:
             instructions = next_page.get_instructions()
-            ref_audio = next_page.get_reference_audio() if not isinstance(next_page, EMOSPage) else None
+            ref_audio = next_page.get_reference_audio() if not isinstance(next_page, self.EMOSPage) else None
             tar_audio = next_page.get_target_audio()
             
             # Get radio button configuration for next page
@@ -289,7 +283,7 @@ class MOSTest:
             radio_update = update(choices=choices, value=None, visible=True)
             
             # Handle EMOS-specific elements
-            if isinstance(next_page, EMOSPage):
+            if isinstance(next_page, self.EMOSPage):
                 emos_label = update(visible=True)
                 transcript = update(value=next_page.get_edited_transcript(), visible=True)
             else:
@@ -310,8 +304,8 @@ class MOSTest:
         return (
             update(value=instructions),
             progress,
-            update(value=ref_audio, label='sample A' if isinstance(next_page, CMOSPage) else 'Reference'),
-            update(value=tar_audio, label='sample B' if isinstance(next_page, CMOSPage) else 'Target'),
+            update(value=ref_audio, label='sample A'),
+            update(value=tar_audio, label='sample B'),
             radio_update,
             submit_score,
             redirect,
@@ -493,7 +487,7 @@ class MOSTest:
                 # Get first page configuration
                 first_page = self.get_current_page(test_cases, 0)
                 if first_page:
-                    ref_audio = first_page.get_reference_audio() if not isinstance(first_page, EMOSPage) else None
+                    ref_audio = first_page.get_reference_audio() if not isinstance(first_page, self.EMOSPage) else None
                     tar_audio = first_page.get_target_audio()
                     instructions = first_page.get_instructions()
                     
@@ -502,7 +496,7 @@ class MOSTest:
                     radio_update = update(choices=choices, value=None, visible=True)
                     
                     # Handle EMOS-specific elements
-                    if isinstance(first_page, EMOSPage):
+                    if isinstance(first_page, self.EMOSPage):
                         transcript_val = first_page.get_edited_transcript()
                         transcript_visible = True
                         # For EMOS editing, you might need a separate method or handle differently
@@ -619,19 +613,50 @@ class MOSTest:
             )
 
         return interface
+    
+@hydra.main(version_base=None, config_path="config")
+def main(cfg: DictConfig) -> None:
+    """Functional approach to main"""
+
+    language = cfg.language
+    page_module = f"pages.{language}"
+
+    pages = import_module(page_module)
+    
+    # Create sampler
+    sampler = TestCasesSampler(
+        test_cases_json=cfg.sampler.test_list_path,
+        sample_size_per_test=cfg.sampler.sample_size_per_test,
+    )
+    
+    # Create test
+    test = MOSTest(
+        case_sampler=sampler,
+        page_module=pages,
+        attention_checks=cfg.attention_checks,
+        instruction_pages=cfg.instructions,
+    )
+    
+    # Create and launch interface
+    interface = test.create_interface()
+    
+    # Prepare launch parameters
+    launch_cfg = cfg.gradio
+    allowed_paths = []
+    for path in launch_cfg.allowed_paths:
+        if path == "cwd":
+            allowed_paths.append(os.getcwd())
+        else:
+            allowed_paths.append(str(Path(path).resolve()))
+    
+    interface.launch(
+        server_name=launch_cfg.server_name,
+        server_port=launch_cfg.server_port,
+        root_path=launch_cfg.root_path,
+        share=launch_cfg.share,
+        show_error=launch_cfg.show_error,
+        allowed_paths=allowed_paths
+    )
 
 if __name__ == "__main__":
-    sampler = TestCasesSampler(
-        './test_lists/swedish_localfile_mp3.json',
-        sample_size_per_test=2,
-    )
-    test = MOSTest(case_sampler=sampler)
-    interface = test.create_interface()
-    interface.launch(
-        server_name="127.0.0.1",      # bind locally; Caddy proxies
-        server_port=52705,            # must match Caddy upstream
-        root_path="/mos",             # app lives at https://<domain>/mos/...
-        share=False,                  # no public tunnel
-        show_error=True,
-        allowed_paths=[os.getcwd()]   # serve ./audios, ./results, etc.
-    )
+    main()

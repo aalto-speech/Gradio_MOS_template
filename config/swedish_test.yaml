@@ -1,0 +1,47 @@
+sampler:
+  test_list_path: test_lists/swedish_localfile_mp3.json
+  sample_size_per_test: 
+gradio:
+  server_name: 127.0.0.1
+  server_port: 52705
+  root_path: /mos
+  share: false
+  show_error: true
+  allowed_paths:
+    - cwd
+attention_checks:
+  - type: "attention"
+    reference: audios/attention_check_swedish/-3.mp3
+    target: audios/attention_check_swedish/-3.mp3
+  - type: "attention"
+    reference: audios/attention_check_swedish/-2.mp3
+    target: audios/attention_check_swedish/-2.mp3
+  - type: "attention"
+    reference: audios/attention_check_swedish/-1.mp3
+    target: audios/attention_check_swedish/-1.mp3
+  - type: "attention"
+    reference: audios/attention_check_swedish/0.mp3
+    target: audios/attention_check_swedish/0.mp3
+  - type: "attention"
+    reference: audios/attention_check_swedish/1.mp3
+    target: audios/attention_check_swedish/1.mp3
+  - type: "attention"
+    reference: audios/attention_check_swedish/2.mp3
+    target: audios/attention_check_swedish/2.mp3
+  - type: "attention"
+    reference: audios/attention_check_swedish/3.mp3
+    target: audios/attention_check_swedish/3.mp3
+
+instructions:
+  - type: "cmos_instruction"
+    reference: test_audios_mp3/icassp_mos_sv/prompt_speech/common_voice_sv-SE_19101745.mp3
+    target: test_audios_mp3/icassp_mos_sv/prompt_speech/common_voice_sv-SE_20741435.mp3
+  - type: "smos_instruction"
+    reference: test_audios_mp3/icassp_mos_sv/original_swedish/011731125914_H210637-28_27_0.mp3
+    target: test_audios_mp3/icassp_mos_sv/original_swedish/011731125914_GY10141-24_46_1.mp3
+
+language: swedish
+
+hydra:
+  run:
+    dir: ./test_${language}/${now:%Y-%m-%d}/${now:%H-%M-%S}

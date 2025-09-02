@@ -1,0 +1,33 @@
+sampler:
+  test_list_path:
+  sample_size_per_test: 
+gradio:
+  server_name: 127.0.0.1
+  server_port: 52705
+  root_path: /mos
+  share: false
+  show_error: true
+  allowed_paths:
+    - cwd
+
+attention_check:
+  - type: 'attention'
+    reference: 'audios/attention_high.wav'
+    target: 'audios/attention_high.wav'
+  - type: 'attention'
+    reference: 'audios/attention_high.wav'
+    target: 'audios/attention_high.wav'
+
+instructions:
+  - type: "cmos_instruction"
+    reference: "audios/4.wav"
+    target: "audios/4.wav"
+  - type: "smos_instruction"
+    reference: "audios/1.wav"
+    target: "audios/1.wav"
+
+language: english
+
+hydra:
+  run:
+    dir: ./test_${language}/${now:%Y-%m-%d}/${now:%H-%M-%S}

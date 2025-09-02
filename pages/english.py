@@ -222,7 +222,7 @@ class AttentionPage(CMOSPage):
     def get_instructions(self):
         return """
         ### Attention Check
-        Both the reference and target audios are identical, they are instructions to you on how to rate this question.
+        Audio A and Audio B are identical, they are both instructions to you on how to rate this question.
 
         Please rate as the audio instructed.
         - Scale: -3 to 3
