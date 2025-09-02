@@ -3,6 +3,7 @@ import gradio as gr
 import json
 import os
 import random
+import math
 from typing import List
 from gradio import update
 import hydra
@@ -39,11 +40,14 @@ class MOSTest:
             random.shuffle(cases)
             test_cases.extend(cases)
 
-        num_attention = len(test_cases) // self.case_sampler.sample_size_per_test
+        num_attention = 4
         
-        for attention_check in random.sample(self.attention_checks, num_attention):
+        for i, attention_check in enumerate(random.sample(self.attention_checks, num_attention)):
             test_cases.insert(
-                random.randint(int(0.25 * len(test_cases)), int(0.95 * len(test_cases))), 
+                random.randint(
+                    math.floor(0.2 * (i + 1) * len(test_cases)),
+                    math.floor(0.2 * (i + 2) * len(test_cases))
+                ),
                 attention_check
             )
         test_cases = self.instruction_pages + test_cases
@@ -361,7 +365,7 @@ class MOSTest:
                 
                 with gr.Row():
                     reference = gr.Audio(
-                        label="Reference Audio",
+                        label="sample A",
                         interactive=False,
                         streaming=True,
                         show_download_button=False,
@@ -369,7 +373,7 @@ class MOSTest:
                         editable=False,
                     )
                     target = gr.Audio(
-                        label="Target Audio",
+                        label="sample B",
                         interactive=False,
                         streaming=True,
                         show_download_button=False,
