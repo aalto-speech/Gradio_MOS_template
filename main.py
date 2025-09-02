@@ -37,8 +37,20 @@ class MOSTest:
         """Sample new test cases for each session"""
         questions = self.case_sampler.sample_test_cases()
         test_cases = []
+
+        for instruction in self.instruction_pages:
+            match instruction["type"]:
+                case "smos_instruction":
+                    random.shuffle(questions['SMOS'])
+                    questions['SMOS'].insert(0, instruction)
+                case "cmos_instruction":
+                    random.shuffle(questions['CMOS'])
+                    questions['CMOS'].insert(0, instruction)
+                case _:
+                    print(f"Unsupported instruction type: {instruction['type']}. For now only deal with SMOS and CMOS instructions")
+                    continue # For now only deal with SMOS and CMOS instructions
+
         for _, cases in questions.items():
-            random.shuffle(cases)
             test_cases.extend(cases)
 
         num_attention = 4
@@ -51,7 +63,7 @@ class MOSTest:
                 ),
                 attention_check
             )
-        test_cases = self.instruction_pages + test_cases
+        # test_cases = self.instruction_pages + test_cases
         return test_cases
 
     def capture_url_params(self, request: gr.Request):
