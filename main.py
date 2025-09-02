@@ -1,3 +1,4 @@
+import glob
 from pathlib import Path
 import gradio as gr
 import json
@@ -469,6 +470,24 @@ class MOSTest:
 
             def start_test(email_input, pid_input, test_cases):
                 # Modified validation to only require email if no PID is provided
+                num_results = len(glob.glob("results/*_results.json"))
+
+                if num_results >= 30:
+                    return (
+                        None,
+                        update(value="The maximum number of participants has been reached. Thank you for your interest!", visible=True),
+                        update(visible=True),  # Keep id_input_section visible
+                        update(visible=False),  # Keep test_interface hidden
+                        None,
+                        None,
+                        None,
+                        update(),
+                        update(visible=False),
+                        update(value="", visible=False),
+                        0,  # current_page_state
+                        []   # results_state
+                    )
+
                 if not is_valid_email(email_input) and not pid_input:
                     return (
                         None,
