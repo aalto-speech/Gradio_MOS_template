@@ -22,6 +22,7 @@ class MOSTest:
             attention_checks: List[dict], 
             instruction_pages: List[dict],
             css_file: str = None,
+            prolific_return_code: str = None,
         ):
         # Keep the structure of test_cases as a list
         self.case_sampler = case_sampler
@@ -40,7 +41,10 @@ class MOSTest:
         else:
             self.custom_css = None
 
-        self.redirect_url = 'https://app.prolific.com/submissions/complete?cc=C1E3KUXW'
+        if prolific_return_code is None:
+            self.redirect_url = "https://app.prolific.com/"
+        else:
+            self.redirect_url = f"https://app.prolific.com/submissions/complete?cc={prolific_return_code}"
 
     def sample_test_cases_for_session(self):
         """Sample new test cases for each session"""
@@ -679,6 +683,7 @@ def main(cfg: DictConfig) -> None:
         attention_checks=cfg.attention_checks,
         instruction_pages=cfg.instructions,
         css_file=cfg.get("css_file", None),
+        prolific_return_code=cfg.get("prolific_return_code", None),
     )
     
     # Create and launch interface
