@@ -20,7 +20,8 @@ class MOSTest:
             case_sampler: TestCasesSampler, 
             page_module, 
             attention_checks: List[dict], 
-            instruction_pages: List[dict]
+            instruction_pages: List[dict],
+            css_file: str = None,
         ):
         # Keep the structure of test_cases as a list
         self.case_sampler = case_sampler
@@ -32,6 +33,14 @@ class MOSTest:
         self.PageFactory = getattr(page_module, "PageFactory")
         self.EMOSPage = getattr(page_module, "EMOSPage")
         self.CMOSPage = getattr(page_module, "CMOSPage")
+
+        if css_file and os.path.isfile(css_file):
+            with open(css_file, 'r') as f:
+                self.custom_css = f.read()
+        else:
+            self.custom_css = None
+
+        self.redirect_url = 'https://app.prolific.com/submissions/complete?cc=C1E3KUXW'
 
     def sample_test_cases_for_session(self):
         """Sample new test cases for each session"""
@@ -338,7 +347,7 @@ class MOSTest:
     def create_interface(self):
         """Create the Gradio interface for the MOS test"""
         # Don't sample test cases here - do it per session
-        with gr.Blocks() as interface:
+        with gr.Blocks(css=self.custom_css) as interface:
             user_id = gr.State(value=None)
             url_params_state = gr.State(value={})
             
@@ -639,8 +648,7 @@ class MOSTest:
                 outputs=[editing_score_input]
             )
 
-            redirect_url = 'https://app.prolific.com/submissions/complete?cc=C1E3KUXW'
-            redirect_js = f"() => {{ window.location.href = '{redirect_url}' }}"
+            redirect_js = f"() => {{ window.location.href = '{self.redirect_url}' }}"
             redirect.click(
                 lambda: None,  # No action needed, just to trigger the redirect
                 outputs=[],
@@ -670,6 +678,7 @@ def main(cfg: DictConfig) -> None:
         page_module=pages,
         attention_checks=cfg.attention_checks,
         instruction_pages=cfg.instructions,
+        css_file=cfg.get("css_file", None),
     )
     
     # Create and launch interface
