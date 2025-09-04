@@ -13,7 +13,7 @@ def check_file_attention_checks(results):
     
     for test in attention_tests:
         audio_path = test['reference_audio']
-        expected_score = int(os.path.splitext(audio_path)[0].split("_")[-1])
+        expected_score = int(os.path.splitext(os.path.basename(audio_path))[0].split("_")[-1])
         actual_score = test['score']
         
         if expected_score != actual_score:
