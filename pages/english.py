@@ -137,7 +137,7 @@ class QMOSPage(NoReferencePage):
         - It's very important to trust your first impression and not overthink your answer.
         Please consider the following aspect for your rating:
         1. Rate how pleasant the speech sounds to your ear.
-        2. Are there any audio artefacts, such as background noise, crackling, echo, volume inconsistencies, or digital distortions.
+        2. Are there any audio artefacts, such as background noise, reverberation, volume inconsistencies, or digital distortions.
         3. Is the speech clear and intelligible for you.
         """
     
@@ -160,10 +160,10 @@ class QMOSInstructionPage(QMOSPage):
         - Scale: 1-5 (1: very bad, 2: bad, 3: ok, 4: good, 5: very good)
         - Please finish listening the given audio before submitting your score.
         - It's very important to trust your first impression and not overthink your answer.
-        - **For this instruction example, you should give a score of 5 since it's a high-quality speech**
+        - **For this instruction example, you should give a score of 5 since it's a studio-quality speech**
         When evaluating the quality of the speech, please consider the following aspect for your rating:
         1. How pleasant the speech sounds to your ear.
-        2. Are there any audio artefacts, such as background noise, crackling, echo, volume inconsistencies, or digital distortions.
+        2. Are there any audio artefacts, such as background noise, reverberation, volume inconsistencies, or digital distortions.
         3. Is the speech clear and intelligible for you.
         """
 
