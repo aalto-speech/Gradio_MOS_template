@@ -59,10 +59,9 @@ class MOSTest:
                     case "cmos_instruction":
                         random.shuffle(questions['CMOS'])
                         questions['CMOS'].insert(0, instruction)
-                    case "mos_instruction":
-                        # random.shuffle(questions['qmos'])
-                        # questions['qmos'].insert(0, instruction)
-                        print("qmos instruction page type detected, but no special handling implemented yet.")
+                    case "qmos_instruction":
+                        random.shuffle(questions['qmos'])
+                        questions['qmos'].insert(0, instruction)
                     case _:
                         print(f"Unsupported instruction type: {instruction['type']}. For now only deal with SMOS and CMOS instructions")
                         continue # For now only deal with SMOS and CMOS instructions
@@ -70,7 +69,7 @@ class MOSTest:
         for _, cases in questions.items():
             test_cases.extend(cases)
 
-        num_attention = 4
+        num_attention = 3
         
         if self.attention_checks is not None:
             for i, attention_check in enumerate(random.sample(self.attention_checks, num_attention)):

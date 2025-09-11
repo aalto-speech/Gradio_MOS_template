@@ -1,0 +1,20 @@
+.gradio-container {
+  width: 80ch !important;
+  margin: 0 auto; /* centers it horizontally */
+}
+#component-17 {
+  line-height: 1 !important;
+}
+
+#component-17 * {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+#component-15 > div:nth-child(6) {
+  width: 80ch !important;
+}
+
+footer {
+  display: none !important;
+}

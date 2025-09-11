@@ -224,16 +224,16 @@ class TTSLocalTestGenerator:
         
         return all_pairs
     
-    def _generate_mos_pairs(self, config: Dict[str, Any], system_files: Dict[str, List[Dict]], 
+    def _generate_qmos_pairs(self, config: Dict[str, Any], system_files: Dict[str, List[Dict]], 
                            num_pairs: int) -> List[List[Dict]]:
         """Generate MOS test cases - single audio evaluation (no reference needed)"""
         all_pairs = []
         
         # Get MOS test configurations from the new format
-        if 'tests' not in config or 'MOS' not in config['tests']:
+        if 'tests' not in config or 'QMOS' not in config['tests']:
             return all_pairs
         
-        mos_configs = config['tests']['MOS']
+        mos_configs = config['tests']['QMOS']
         
         print(f"\nGenerating MOS pairs...")
         for pair_config in mos_configs:
@@ -260,15 +260,15 @@ class TTSLocalTestGenerator:
             for target_file in selected_files:
                 pairs_for_this_evaluation.append({
                     "reference": None,  # No reference needed for MOS
-                    "target": target_file['local_path'],
+                    "target": target_file['complete_path'],
                     "system": target_system,
-                    "type": "MOS",
-                    "target_filename": target_file['complete_path']
+                    "type": "QMOS",
+                    "target_filename": target_file['local_path']
                 })
             
             # Add this evaluation's pairs as a separate list
             all_pairs.append(pairs_for_this_evaluation)
-            print(f"Generated {len(selected_files)} MOS evaluations for {target_system}")
+            print(f"Generated {len(selected_files)} QMOS evaluations for {target_system}")
         
         return all_pairs
     
@@ -277,7 +277,7 @@ class TTSLocalTestGenerator:
         return {
             'CMOS': self._generate_cmos_pairs,
             'SMOS': self._generate_smos_pairs,
-            'MOS': self._generate_mos_pairs,
+            'QMOS': self._generate_qmos_pairs,
         }
     
     def _detect_test_types_from_config(self, config: Dict[str, Any]) -> List[str]:

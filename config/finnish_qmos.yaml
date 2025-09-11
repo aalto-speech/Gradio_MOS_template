@@ -1,0 +1,32 @@
+sampler:
+  test_list_path: test_lists/finnish_qmos_test.json
+  sample_size_per_test: 10
+gradio:
+  server_name: 127.0.0.1
+  server_port: 52705
+  root_path: /mos
+  share: false
+  show_error: true
+  allowed_paths:
+    - cwd
+attention_checks:
+  - type: "no_reference_attention"
+    target: audios/no_ref_attention_check_finnish/attention_check_bad.wav
+  - type: "no_reference_attention"
+    target: audios/no_ref_attention_check_finnish/attention_check_poor.wav
+  - type: "no_reference_attention"
+    target: audios/no_ref_attention_check_finnish/attention_check_fair.wav
+  - type: "no_reference_attention"
+    target: audios/no_ref_attention_check_finnish/attention_check_good.wav
+  - type: "no_reference_attention"
+    target: audios/no_ref_attention_check_finnish/attention_check_excellent.wav
+
+instructions:
+  - type: "qmos_instruction"
+    target: test_audios_mp3/icassp_mos_fi/prompt_speech/01_proosa_0022.mp3
+
+language: english
+
+hydra:
+  run:
+    dir: ./test_${language}/mos/${now:%Y-%m-%d}/${now:%H-%M-%S}
