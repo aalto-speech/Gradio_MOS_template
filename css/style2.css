@@ -1,5 +1,5 @@
 .gradio-container {
-  width: 80ch !important;
+  width: 100ch !important;
   margin: 0 auto; /* centers it horizontally */
 }
 #component-17 {
@@ -12,7 +12,7 @@
 }
 
 #component-15 > div:nth-child(6) {
-  width: 80ch !important;
+  width: 100ch !important;
 }
 
 footer {
