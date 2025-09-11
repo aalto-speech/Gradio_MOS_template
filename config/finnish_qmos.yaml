@@ -27,7 +27,7 @@ instructions:
   - type: "qmos_negative_instruction"
     target: audios/no_ref_attention_check_finnish/corrupted.mp3
 
-language: english
+language: finnish
 
 hydra:
   run:

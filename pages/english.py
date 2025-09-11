@@ -136,7 +136,7 @@ class QMOSPage(NoReferencePage):
         - Please finish listening the given audio before submitting your score.
         - It's very important to trust your first impression and not overthink your answer.
         Please consider the following aspect for your rating:
-        1. Are there any audio artefacts, such as background noise, reverberation, volume inconsistencies, or digital distortions.
+        1. Are there any audio artifacts, such as background noise, reverberation, volume inconsistencies, or digital distortions.
         """
     
     def get_slider_config(self):
@@ -160,7 +160,7 @@ class QMOSInstructionPage(QMOSPage):
         - It's very important to trust your first impression and not overthink your answer.
         - **For this instruction example, you should give a score of 5 since it's a studio-quality speech**
         When evaluating the quality of the speech, please consider the following aspect for your rating:
-        1. Are there any audio artefacts, such as background noise, reverberation, volume inconsistencies, or digital distortions.
+        1. Are there any audio artifacts, such as background noise, reverberation, volume inconsistencies, or digital distortions.
         """
     
 class QMOSNegativeInstructionPage(QMOSPage):
@@ -177,7 +177,7 @@ class QMOSNegativeInstructionPage(QMOSPage):
         - It's very important to trust your first impression and not overthink your answer.
         - **For this instruction example, you should give a score of 1 since it's a low-quality speech with significant background noise and distortions**
         When evaluating the quality of the speech, please consider the following aspect for your rating:
-        1. Are there any audio artefacts, such as background noise, reverberation, volume inconsistencies, or digital distortions.
+        1. Are there any audio artifacts, such as background noise, reverberation, volume inconsistencies, or digital distortions.
         """
 
 class AttentionNoReferencePage(NoReferencePage):

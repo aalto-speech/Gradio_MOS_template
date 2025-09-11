@@ -60,10 +60,9 @@ class MOSTest:
                         random.shuffle(questions['CMOS'])
                         questions['CMOS'].insert(0, instruction)
                     case "qmos_instruction":
-                        random.shuffle(questions['qmos'])
-                        questions['qmos'].insert(0, instruction)
+                        questions['QMOS'].insert(0, instruction)
                     case "qmos_negative_instruction":
-                        questions['qmos'].insert(0, instruction)
+                        questions['QMOS'].insert(0, instruction)
                     case _:
                         print(f"Unsupported instruction type: {instruction['type']}. For now only deal with SMOS and CMOS instructions")
                         continue # For now only deal with SMOS and CMOS instructions
