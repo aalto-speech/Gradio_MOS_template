@@ -24,6 +24,8 @@ attention_checks:
 instructions:
   - type: "qmos_instruction"
     target: test_audios_mp3/icassp_mos_fi/prompt_speech/01_proosa_0022.mp3
+  - type: "qmos_negative_instruction"
+    target: audios/no_ref_attention_check_finnish/corrupted.mp3
 
 language: english
 
