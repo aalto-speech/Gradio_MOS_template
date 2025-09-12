@@ -225,13 +225,13 @@ class MOSTest:
         # Store result from the current page, including URL parameters
         result_entry = {
             "test_type": test_case["type"],
-            "reference_audio": test_case.get("reference", ""),
+            "reference_audio": test_case.get("reference", None),
             "target_audio": test_case["target"],
             "ref_system": test_case.get(
-                "ref_system", ""
+                "ref_system", None
             ),
             "target_system": test_case.get(
-                "target_system", ""
+                "target_system", None
             ),
             "swap": test_case.get("swap", False),
             "score": naturalness_score_int
