@@ -156,6 +156,77 @@ class AttentionPage(CMOSPage):
         Vaikka äänitteet ovat identtiset, **kuuntele molemmat äänitteet loppuun ennen vastaustesi lähettämistä.**
         """
 
+class QMOSPage(NoReferencePage):
+    """QMOS (quality) test page"""
+    
+    def get_instructions(self):
+        return """
+        ### Puheen laadun arviointi (QMOS)
+
+        Arvioi ääninäytteen laatua.
+        - Asteikko: 1-5 (1: Huono, 2: Heikko, 3: Kohtalainen, 4: Hyvä, 5: Erinomainen)
+        - Kuuntele annettu näyte loppuun ennen arvion lähettämistä.
+        - Luota ensivaikutelmaan äläkä mieti vastausta liikaa.
+
+        Ota arvioinnissasi huomioon mahdolliset häiriöt äänessä, kuten taustamelu, kaiku, vaihteleva äänenvoimakkuus tai digitaaliset vääristymät.  
+        """
+    
+    def get_slider_config(self):
+        return 1, 5, 3  # min, max, default
+    
+    def get_level_label(self):
+        return ["Huono", "Heikko", "Kohtalainen", "Hyvä", "Erinomainen"]
+
+
+class QMOSInstructionPage(QMOSPage):
+    """QMOS instruction page"""
+    
+    def get_instructions(self):
+        return """
+        ### Puheen laadun arviointi (QMOS)
+
+        Arvioi ääninäytteen laatua.
+        - Asteikko: 1-5 (1: Huono, 2: Heikko, 3: Kohtalainen, 4: Hyvä, 5: Erinomainen)
+        - Kuuntele annettu näyte loppuun ennen arvion lähettämistä.
+        - Luota ensivaikutelmaan äläkä mieti vastausta liikaa.
+        - **Tässä harjoitusesimerkissä sinun tulisi antaa pistemäärä 5 - Erinomainen, koska kyseessä on studiolaatuinen puheäänite**
+
+        Ota arvioinnissasi huomioon mahdolliset häiriöt äänessä, kuten taustamelu, kaiku, vaihteleva äänenvoimakkuus tai digitaaliset vääristymät.  
+        """
+    
+class QMOSNegativeInstructionPage(QMOSPage):
+    """QMOS negative instruction page"""
+    
+    def get_instructions(self):
+        return """
+        ### Puheen laadun arviointi (QMOS)
+
+        Arvioi ääninäytteen laatua.
+        - Asteikko: 1-5 (1: Huono, 2: Heikko, 3: Kohtalainen, 4: Hyvä, 5: Erinomainen)
+        - Kuuntele annettu näyte loppuun ennen arvion lähettämistä.
+        - Luota ensivaikutelmaan äläkä mieti vastausta liikaa.
+        - **Tässä harjoitusesimerkissä sinun tulisi antaa pistemäärä 1 - Huono, koska kyseessä on heikkolaatuinen puhenäyte, jossa on merkittävää taustamelua ja vääristymiä**
+
+        Ota arvioinnissasi huomioon mahdolliset häiriöt äänessä, kuten taustamelu, kaiku, vaihteleva äänenvoimakkuus tai digitaaliset vääristymät.  
+        """
+
+class AttentionNoReferencePage(NoReferencePage):
+    """Abstract base class for attention check pages without reference audio"""
+    def get_instructions(self):
+        return """
+        ### Huomiotarkistus
+        Annettu näyte sisältää ohjeet siitä, miten tämä kysymys tulee arvioida.
+
+        Arvioi puhenäytteen sisältämän ohjeen mukaisesti.
+
+        - Asteikko: 1 - Huono, 2 - Heikko, 3 - Kohtalainen, 4 - Hyvä, 5 - Erinomainen
+        """
+    
+    def get_slider_config(self):
+        return 1, 5, 3  # min, max, default
+    
+    def get_level_label(self):
+        return ["Huono", "Heikko", "Kohtalainen", "Hyvä", "Erinomainen"]
 
 
 class EMOSPage(NoReferencePage):
@@ -182,9 +253,12 @@ class PageFactory:
         # "nmos": NMOSPage,
         # "NMOS": NMOSPage,
         # "nmos_instruction": NMOSInstructionPage,
-        # "qmos": QMOSPage,
-        # "QMOS": QMOSPage,
-        # "qmos_instruction": QMOSInstructionPage,
+        "qmos": QMOSPage,
+        "QMOS": QMOSPage,
+        "qmos_instruction": QMOSInstructionPage,
+        "qmos_negative_instruction": QMOSNegativeInstructionPage,
+        "no_reference_attention": AttentionNoReferencePage,
+
     }
     
     @classmethod

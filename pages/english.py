@@ -9,7 +9,7 @@ class TestPage(ABC):
     def __init__(self, test_case):
         self.test_case = test_case
         self.test_type = test_case["type"]
-        self.reference = test_case["reference"]
+        self.reference = test_case.get("reference", None)
         self.target = test_case["target"]
     
     @abstractmethod
@@ -130,22 +130,21 @@ class QMOSPage(NoReferencePage):
     
     def get_instructions(self):
         return """
-        ### Speech Quality Test (QMOS)
-        Please rate the quality of the target audio.
-        - Scale: 1-5 (1: very bad, 2: bad, 3: ok, 4: good, 5: very good)
-        - Please finish listening the given audio before submitting your score.
-        - It's very important to trust your first impression and not overthink your answer.
-        Please consider the following aspect for your rating:
-        1. Rate how pleasant the speech sounds to your ear.
-        2. Are there any audio artefacts, such as background noise, crackling, echo, volume inconsistencies, or digital distortions.
-        3. Is the speech clear and intelligible for you.
+        ### Speech Quality Evaluation (QMOS)
+        
+        Please rate the quality of the audio sample.
+        - Scale: 1-5 (1: Bad, 2: Poor, 3: Fair, 4: Good, 5: Excellent)
+        - Please finish listening to the given audio sample before submitting your score.
+        - Trust your first impression, no need to overthink the answer.
+                
+        Consider in your rating whether the audio sample has artefacts, such as background noise, reverberation, volume inconsistencies, or digital distortions.
         """
     
     def get_slider_config(self):
         return 1, 5, 3  # min, max, default
     
     def get_level_label(self):
-        return ["Very Bad", "Bad", "Ok", "Good", "Very Good"]
+        return ["Bad", "Poor", "Fair", "Good", "Excellent"]
 
 
 class QMOSInstructionPage(QMOSPage):
@@ -153,19 +152,50 @@ class QMOSInstructionPage(QMOSPage):
     
     def get_instructions(self):
         return """
-        ### Speech Quality Test - Instruction (QMOS)
-        **This is an instruction example where the target audios is a high-quality speech.**
+        ### Speech Quality Evaluation (QMOS) - Instruction (QMOS)
         
-        Please rate the quality of the target audio.
-        - Scale: 1-5 (1: very bad, 2: bad, 3: ok, 4: good, 5: very good)
-        - Please finish listening the given audio before submitting your score.
-        - It's very important to trust your first impression and not overthink your answer.
-        - **For this instruction example, you should give a score of 5 since it's a high-quality speech**
-        When evaluating the quality of the speech, please consider the following aspect for your rating:
-        1. How pleasant the speech sounds to your ear.
-        2. Are there any audio artefacts, such as background noise, crackling, echo, volume inconsistencies, or digital distortions.
-        3. Is the speech clear and intelligible for you.
+        Please rate the quality of the audio sample.
+        - Scale: 1-5 (1: Bad, 2: Poor, 3: Fair, 4: Good, 5: Excellent)
+        - Please finish listening to the given audio sample before submitting your score.
+        - Trust your first impression, no need to overthink the answer.
+        - **For this instruction example, you should give a score of 5 since it's a studio-quality speech sample**
+                
+        Consider in your rating whether the audio sample has artefacts, such as background noise, reverberation, volume inconsistencies, or digital distortions.
         """
+    
+class QMOSNegativeInstructionPage(QMOSPage):
+    """QMOS negative instruction page"""
+    
+    def get_instructions(self):
+        return """
+        ### Speech Quality Test - Instruction (QMOS)
+        
+        Please rate the quality of the audio sample.
+        - Scale: 1-5 (1: Bad, 2: Poor, 3: Fair, 4: Good, 5: Excellent)
+        - Please finish listening to the given audio sample before submitting your score.
+        - Trust your first impression, no need to overthink the answer.
+        - **For this instruction example, you should give a score of 1 since it's a low-quality speech with significant background noise and distortions**
+        
+        Consider in your rating whether the audio sample has artefacts, such as background noise, reverberation, volume inconsistencies, or digital distortions.
+        """
+
+class AttentionNoReferencePage(NoReferencePage):
+    """Abstract base class for attention check pages without reference audio"""
+    def get_instructions(self):
+        return """
+        ### Attention Check
+
+        The given audio sample contains instructions on how to rate this question.
+
+        Please rate as instructed in the sample.
+        - Scale: 1 to 5
+        """
+    
+    def get_slider_config(self):
+        return 1, 5, 3  # min, max, default
+    
+    def get_level_label(self):
+        return ["Bad", "Poor", "Fair", "Good", "Excellent"]
 
 
 class CMOSPage(TestPage):
@@ -317,6 +347,7 @@ class PageFactory:
         "CMOS": CMOSPage,
         "cmos_instruction": CMOSInstructionPage,
         "attention": AttentionPage,
+        "no_reference_attention": AttentionNoReferencePage,
         "emos": EMOSPage,
         "EMOS": EMOSPage,
         "emos_instruction": EMOSInstructionPage,
@@ -326,6 +357,7 @@ class PageFactory:
         "qmos": QMOSPage,
         "QMOS": QMOSPage,
         "qmos_instruction": QMOSInstructionPage,
+        "qmos_negative_instruction": QMOSNegativeInstructionPage,
     }
     
     @classmethod
