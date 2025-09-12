@@ -215,7 +215,7 @@ class AttentionNoReferencePage(NoReferencePage):
     """Abstract base class for attention check pages without reference audio"""
     def get_instructions(self):
         return """
-        ### Tarkkaavaisuustesti
+        ### Huomiotarkistus
         Annettu audio on ohje siitä, miten tämä kysymys tulee arvioida.
 
         Arvioi kuten audio ohjeisti.
