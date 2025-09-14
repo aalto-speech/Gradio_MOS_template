@@ -160,7 +160,7 @@ def analyze_mos_by_utterance(results):
         }
     
     # Calculate overall box plot metrics from per-utterance averages
-    all_averages = [data['average_score'] for data in per_utterance_averages.values()]
+    all_averages = [data['average_score'] for data in per_utterance_averages.values() if data['n_ratings'] > 1]
     boxplot_metrics = calculate_boxplot_metrics(all_averages)
     
     return per_utterance_averages, boxplot_metrics
