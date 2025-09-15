@@ -291,7 +291,7 @@ def read_mos_file(mos_file_path: str) -> Tuple[Dict[str, any], Dict[str, float]]
         return {}, {}
     
     # Extract boxplot metrics
-    boxplot_metrics = mos_data.get('summary', {}).get('boxplot_metrics', {})
+    # boxplot_metrics = mos_data.get('summary', {}).get('boxplot_metrics', {})
     
     # Extract per-utterance scores
     per_utterance_data = mos_data.get('per_utterance_averages', {})
@@ -299,11 +299,15 @@ def read_mos_file(mos_file_path: str) -> Tuple[Dict[str, any], Dict[str, float]]
     
     for file_path, score_data in per_utterance_data.items():
         # Get filename without extension (to match DNSMOS keys)
+        if score_data['n_ratings'] <= 2:
+            continue  # Skip entries with insufficient ratings
         filename = Path(file_path).stem
-        average_score = score_data.get('average_score', 0.0)
+        average_score = score_data['average_score']
         per_utterance_scores[filename] = float(average_score)
     
     print(f"Loaded MOS data: {len(per_utterance_scores)} utterances")
+
+    boxplot_metrics = calculate_boxplot_statistics(per_utterance_scores)
     
     return boxplot_metrics, per_utterance_scores
 
@@ -345,9 +349,9 @@ def plot_boxplot_comparison(dns_stats: Dict[str, any], mos_metrics: Dict[str, an
     
     # Create the boxplot
     bp = ax.bxp(box_data, positions=[1, 2], patch_artist=True)
-    # Set labels manually
+    # Set labels manually with larger font
     ax.set_xticks([1, 2])
-    ax.set_xticklabels(['DNSMOS', 'MOS'])
+    ax.set_xticklabels(['DNSMOS', 'MOS'], fontsize=18)
     
     # Customize colors
     colors = ['lightblue', 'lightcoral']
@@ -355,17 +359,22 @@ def plot_boxplot_comparison(dns_stats: Dict[str, any], mos_metrics: Dict[str, an
         patch.set_facecolor(color)
         patch.set_alpha(0.7)
     
-    # Add statistics text
-    ax.text(0.02, 0.98, f'DNSMOS: μ={dns_stats["mean"]:.3f}, σ={dns_stats["std_dev"]:.3f}, n={dns_stats["count"]}', 
-            transform=ax.transAxes, verticalalignment='top', fontsize=10,
+    # Add statistics text with larger font
+    ax.text(0.02, 0.98, f'DNSMOS: μ={dns_stats["mean"]:.3f}, σ={dns_stats["std_dev"]:.3f}', 
+            transform=ax.transAxes, verticalalignment='top', fontsize=18,
             bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.5))
     
-    ax.text(0.02, 0.88, f'MOS: μ={mos_metrics["mean"]:.3f}, σ={mos_metrics["std"]:.3f}, n={mos_metrics["n_samples"]}', 
-            transform=ax.transAxes, verticalalignment='top', fontsize=10,
+    ax.text(0.02, 0.88, f'MOS: μ={mos_metrics["mean"]:.3f}, σ={mos_metrics["std_dev"]:.3f}', 
+            transform=ax.transAxes, verticalalignment='top', fontsize=18,
             bbox=dict(boxstyle='round', facecolor='lightcoral', alpha=0.5))
     
-    ax.set_ylabel('Score')
-    ax.set_title('DNSMOS vs MOS Score Comparison')
+    # Set axis labels and title with larger fonts
+    ax.set_ylabel('Score', fontsize=18)
+    ax.set_title('DNSMOS vs MOS Score Comparison', fontsize=18)
+    
+    # Increase tick label font sizes
+    ax.tick_params(axis='y', labelsize=18)
+    
     ax.grid(True, alpha=0.3)
     
     plt.tight_layout()
