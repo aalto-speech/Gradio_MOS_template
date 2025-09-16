@@ -299,7 +299,7 @@ def read_mos_file(mos_file_path: str) -> Tuple[Dict[str, any], Dict[str, float]]
     
     for file_path, score_data in per_utterance_data.items():
         # Get filename without extension (to match DNSMOS keys)
-        if score_data['n_ratings'] <= 2:
+        if score_data['n_ratings'] <= 1:
             continue  # Skip entries with insufficient ratings
         filename = Path(file_path).stem
         average_score = score_data['average_score']
@@ -412,6 +412,126 @@ def calculate_spearman_correlation(dns_scores: Dict[str, float], mos_scores: Dic
     
     return correlation, p_value, len(common_files)
 
+def plot_dns_mos_scatter(dns_scores: Dict[str, float], 
+                        mos_scores: Dict[str, float],
+                        save_plot: Optional[str] = None,
+                        figure_size: Tuple[int, int] = (10, 8)) -> None:
+    """
+    Create a scatter plot between DNSMOS and MOS scores without calculating correlation.
+    
+    Args:
+        dns_scores: Dictionary of filename -> DNSMOS score
+        mos_scores: Dictionary of filename -> MOS score
+        save_plot: Optional filename to save the plot
+        figure_size: Tuple of (width, height) for the figure size
+    """
+    # Find common filenames
+    common_files = set(dns_scores.keys()) & set(mos_scores.keys())
+    
+    if len(common_files) == 0:
+        print("No common files found between DNSMOS and MOS data")
+        return
+    
+    # Extract paired scores
+    dns_values = [dns_scores[filename] for filename in common_files]
+    mos_values = [mos_scores[filename] for filename in common_files]
+    
+    # Create scatter plot
+    plt.figure(figsize=figure_size)
+    plt.scatter(dns_values, mos_values, alpha=0.6, s=50, edgecolors='black', linewidth=0.5)
+    
+    # Add trend line
+    z = np.polyfit(dns_values, mos_values, 1)
+    p = np.poly1d(z)
+    plt.plot(sorted(dns_values), p(sorted(dns_values)), "r--", alpha=0.8, linewidth=2)
+    
+    # Customize the plot
+    plt.xlabel('DNSMOS Scores', fontsize=12)
+    plt.ylabel('MOS Scores', fontsize=12)
+    plt.title(f'DNSMOS vs MOS Scores (n = {len(common_files)})', fontsize=14, pad=20)
+    plt.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    
+    # Save plot if filename provided
+    plt.savefig(save_plot, dpi=300, bbox_inches='tight')
+    print(f"Plot saved as: {save_plot}")
+
+def plot_bland_altman(dns_scores: Dict[str, float], 
+                     mos_scores: Dict[str, float],
+                     save_plot: Optional[str] = None,
+                     figure_size: Tuple[int, int] = (10, 8)) -> None:
+    """
+    Create a Bland-Altman plot between DNSMOS and MOS scores.
+    
+    Args:
+        dns_scores: Dictionary of filename -> DNSMOS score
+        mos_scores: Dictionary of filename -> MOS score  
+        save_plot: Optional filename to save the plot
+        figure_size: Tuple of (width, height) for the figure size
+    """
+    # Find common filenames
+    common_files = set(dns_scores.keys()) & set(mos_scores.keys())
+    
+    if len(common_files) == 0:
+        print("No common files found between DNSMOS and MOS data")
+        return
+    
+    # Extract paired scores
+    dns_values = np.array([dns_scores[filename] for filename in common_files])
+    mos_values = np.array([mos_scores[filename] for filename in common_files])
+    
+    # Calculate Bland-Altman metrics
+    mean_scores = (dns_values + mos_values) / 2
+    diff_scores = dns_values - mos_values  # DNSMOS - MOS
+    
+    mean_diff = np.mean(diff_scores)
+    std_diff = np.std(diff_scores, ddof=1)
+    
+    # 95% limits of agreement
+    upper_loa = mean_diff + 1.96 * std_diff
+    lower_loa = mean_diff - 1.96 * std_diff
+    
+    # Create Bland-Altman plot
+    plt.figure(figsize=figure_size)
+    
+    # Scatter plot
+    plt.scatter(mean_scores, diff_scores, alpha=0.6, s=50, edgecolors='black', linewidth=0.5)
+    
+    # Mean difference line
+    plt.axhline(mean_diff, color='blue', linestyle='--', linewidth=2, 
+                label=f'Mean difference: {mean_diff:.3f}')
+    
+    # Limits of agreement lines
+    plt.axhline(upper_loa, color='red', linestyle='--', linewidth=2, 
+                label=f'Upper LoA: {upper_loa:.3f}')
+    plt.axhline(lower_loa, color='red', linestyle='--', linewidth=2, 
+                label=f'Lower LoA: {lower_loa:.3f}')
+    
+    # Zero reference line
+    plt.axhline(0, color='gray', linestyle='-', linewidth=1, alpha=0.5)
+    
+    # Customize the plot
+    plt.xlabel('Average of DNSMOS and MOS Scores', fontsize=18)
+    plt.ylabel('Difference (DNSMOS - MOS)', fontsize=18)
+    plt.title(f'Bland-Altman Plot: DNSMOS vs MOS', fontsize=18, pad=20)
+    plt.grid(True, alpha=0.3)
+    plt.legend(loc='best', fontsize=18)
+    
+    # Add statistics text box
+    stats_text = f'Mean ± SD: {mean_diff:.3f} ± {std_diff:.3f}\n95% LoA: [{lower_loa:.3f}, {upper_loa:.3f}]'
+    # plt.text(0.05, 0.05, stats_text, transform=plt.gca().transAxes, 
+    #          bbox=dict(boxstyle='round', facecolor='white', alpha=0.8),
+    #          verticalalignment='bottom', fontsize=18)
+    
+    plt.tight_layout()
+    
+    # Save plot if filename provided
+    if save_plot:
+        plt.savefig(save_plot, dpi=300, bbox_inches='tight')
+        print(f"Plot saved as: {save_plot}")
+    else:
+        plt.show()
 
 def print_correlation_results(correlation: float, p_value: float, n_samples: int) -> None:
     """
@@ -576,6 +696,8 @@ def main():
                 # Calculate Spearman correlation
                 correlation, p_value, n_samples = calculate_spearman_correlation(scores, mos_scores)
                 print_correlation_results(correlation, p_value, n_samples)
+
+                plot_bland_altman(scores, mos_scores, save_plot="dns_mos_bland_altman.png")
     
     # Handle JSON output
     if args.output_file:
