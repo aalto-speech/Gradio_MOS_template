@@ -224,20 +224,9 @@ def analyze_per_utterance(results):
             
         # Extract utterance identifier from the audio path
         # Assuming the utterance ID is in the filename
-        if 'reference_audio' in result:
-            audio_path = result['reference_audio']
-        elif 'target_audio' in result:
-            audio_path = result['target_audio']
-        else:
-            continue
-            
+        audio_path = result['target_audio']
         # Extract utterance ID from filename (adjust this logic based on your filename format)
         utterance = os.path.splitext(os.path.basename(audio_path))[0]
-        # Remove system name and score suffix if present (e.g., "utterance_001_system_4" -> "utterance_001")
-        utterance_parts = utterance.split('_')
-        if len(utterance_parts) > 2:
-            # Keep only the utterance part, remove system and score parts
-            utterance = '_'.join(utterance_parts[:-2]) if utterance_parts[-1].isdigit() else '_'.join(utterance_parts[:-1])
         
         score = result['score']
         
