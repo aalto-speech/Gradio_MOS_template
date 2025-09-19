@@ -212,9 +212,11 @@ def save_results_to_csv(cmos_results, smos_results, output_file='tts_results.csv
     df.to_csv(output_file, index=False)
     print(f"\nResults saved to {output_file}")
 
+
 def analyze_per_utterance(results):
-    """Analyze CMOS and SMOS results per utterance"""
-    utterance_data = defaultdict(lambda: {'cmos_scores': [], 'smos_scores': []})
+    """Analyze CMOS and SMOS results per utterance and target system"""
+    # Structure: utterance -> target_system -> {'cmos_scores': [], 'smos_scores': []}
+    utterance_data = defaultdict(lambda: defaultdict(lambda: {'cmos_scores': [], 'smos_scores': []}))
     
     for result in results:
         if result['test_type'] not in ['CMOS', 'SMOS']:
@@ -230,53 +232,105 @@ def analyze_per_utterance(results):
             continue
             
         # Extract utterance ID from filename (adjust this logic based on your filename format)
-        utterance = os.path.splitext(os.path.basename(audio_path))[0]    
+        utterance = os.path.splitext(os.path.basename(audio_path))[0]
+        # Remove system name and score suffix if present (e.g., "utterance_001_system_4" -> "utterance_001")
+        utterance_parts = utterance.split('_')
+        if len(utterance_parts) > 2:
+            # Keep only the utterance part, remove system and score parts
+            utterance = '_'.join(utterance_parts[:-2]) if utterance_parts[-1].isdigit() else '_'.join(utterance_parts[:-1])
         
         score = result['score']
         
-        # Handle swapped comparisons
+        # Determine target system (use ref_system if swap is True)
         if result['swap']:
+            target_system = result['ref_system']
             score = -score
+        else:
+            target_system = result['target_system']
             
-        # Store scores by test type
+        if not target_system:
+            continue
+            
+        # Store scores by test type and target system
         if result['test_type'] == 'CMOS':
-            utterance_data[utterance]['cmos_scores'].append(score)
+            utterance_data[utterance][target_system]['cmos_scores'].append(score)
         elif result['test_type'] == 'SMOS':
-            utterance_data[utterance]['smos_scores'].append(score)
+            utterance_data[utterance][target_system]['smos_scores'].append(score)
     
-    # Calculate averages
+    # Filter to keep only utterances that have both CMOS and SMOS for both systems
+    # First, identify all target systems
+    all_systems = set()
+    for utterance, systems_data in utterance_data.items():
+        all_systems.update(systems_data.keys())
+    
+    if len(all_systems) < 2:
+        print(f"Warning: Found only {len(all_systems)} target systems. Need at least 2 systems.")
+        return {}
+    
+    # Calculate averages and filter
     utterance_results = {}
-    for utterance, data in utterance_data.items():
-        cmos_scores = data['cmos_scores']
-        smos_scores = data['smos_scores']
+    for utterance, systems_data in utterance_data.items():
+        # Check if this utterance has data for all systems
+        if len(systems_data) != len(all_systems):
+            continue
+            
+        # Check if each system has both CMOS and SMOS scores
+        valid_utterance = True
+        system_results = {}
         
-        # Calculate CMOS average
-        cmos_avg = np.mean(cmos_scores) if cmos_scores else None
-        cmos_count = len(cmos_scores)
+        for system, data in systems_data.items():
+            cmos_scores = data['cmos_scores']
+            smos_scores = data['smos_scores']
+            
+            # Must have both CMOS and SMOS scores for this system
+            if not cmos_scores or not smos_scores:
+                valid_utterance = False
+                break
+                
+            # Calculate averages
+            cmos_avg = np.mean(cmos_scores)
+            smos_avg = np.mean(smos_scores) + 3  # Apply +3 adjustment
+            
+            system_results[system] = {
+                'averaged_CMOS': cmos_avg,
+                'number_of_CMOS_scores': len(cmos_scores),
+                'averaged_SMOS': smos_avg,
+                'number_of_SMOS_scores': len(smos_scores)
+            }
         
-        # Calculate SMOS average (with +3 adjustment)
-        smos_avg = np.mean(smos_scores) + 3 if smos_scores else None
-        smos_count = len(smos_scores)
-        
-        utterance_results[utterance] = {
-            'utterance': utterance,
-            'averaged_CMOS': cmos_avg,
-            'number_of_CMOS_scores': cmos_count,
-            'averaged_SMOS': smos_avg,
-            'number_of_SMOS_scores': smos_count
-        }
+        # Only include utterance if it has complete data for all systems
+        if valid_utterance:
+            utterance_results[utterance] = {
+                'utterance': utterance,
+                'systems': system_results
+            }
     
     return utterance_results
 
 def save_utterance_results_to_json(utterance_results, output_file='utterance_results.json'):
     """Save per-utterance results to JSON file"""
-    # Convert to list format for JSON
-    results_list = list(utterance_results.values())
+    # Convert to the requested format
+    results_list = []
+    
+    for utterance, data in utterance_results.items():
+        utterance_entry = {'utterance': utterance}
+        
+        # Add system-specific results
+        for system, system_data in data['systems'].items():
+            system_key = system.replace(' ', '_')  # Replace spaces with underscores for cleaner keys
+            utterance_entry[f'{system_key}_averaged_CMOS'] = system_data['averaged_CMOS']
+            utterance_entry[f'{system_key}_number_of_CMOS_scores'] = system_data['number_of_CMOS_scores']
+            utterance_entry[f'{system_key}_averaged_SMOS'] = system_data['averaged_SMOS']
+            utterance_entry[f'{system_key}_number_of_SMOS_scores'] = system_data['number_of_SMOS_scores']
+        
+        results_list.append(utterance_entry)
     
     with open(output_file, 'w') as f:
         json.dump(results_list, f, indent=2)
     
     print(f"Per-utterance results saved to {output_file}")
+    print(f"Total utterances with complete data: {len(results_list)}")
+    
     return results_list
 
 def main(directory_path):
