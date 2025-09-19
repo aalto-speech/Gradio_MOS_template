@@ -212,6 +212,78 @@ def save_results_to_csv(cmos_results, smos_results, output_file='tts_results.csv
     df.to_csv(output_file, index=False)
     print(f"\nResults saved to {output_file}")
 
+def analyze_per_utterance(results):
+    """Analyze CMOS and SMOS results per utterance"""
+    utterance_data = defaultdict(lambda: {'cmos_scores': [], 'smos_scores': []})
+    
+    for result in results:
+        if result['test_type'] not in ['CMOS', 'SMOS']:
+            continue
+            
+        # Extract utterance identifier from the audio path
+        # Assuming the utterance ID is in the filename
+        if 'reference_audio' in result:
+            audio_path = result['reference_audio']
+        elif 'target_audio' in result:
+            audio_path = result['target_audio']
+        else:
+            continue
+            
+        # Extract utterance ID from filename (adjust this logic based on your filename format)
+        utterance = os.path.splitext(os.path.basename(audio_path))[0]
+        # Remove system name and score suffix if present (e.g., "utterance_001_system_4" -> "utterance_001")
+        utterance_parts = utterance.split('_')
+        if len(utterance_parts) > 2:
+            # Keep only the utterance part, remove system and score parts
+            utterance = '_'.join(utterance_parts[:-2]) if utterance_parts[-1].isdigit() else '_'.join(utterance_parts[:-1])
+        
+        score = result['score']
+        
+        # Handle swapped comparisons
+        if result['swap']:
+            score = -score
+            
+        # Store scores by test type
+        if result['test_type'] == 'CMOS':
+            utterance_data[utterance]['cmos_scores'].append(score)
+        elif result['test_type'] == 'SMOS':
+            utterance_data[utterance]['smos_scores'].append(score)
+    
+    # Calculate averages
+    utterance_results = {}
+    for utterance, data in utterance_data.items():
+        cmos_scores = data['cmos_scores']
+        smos_scores = data['smos_scores']
+        
+        # Calculate CMOS average
+        cmos_avg = np.mean(cmos_scores) if cmos_scores else None
+        cmos_count = len(cmos_scores)
+        
+        # Calculate SMOS average (with +3 adjustment)
+        smos_avg = np.mean(smos_scores) + 3 if smos_scores else None
+        smos_count = len(smos_scores)
+        
+        utterance_results[utterance] = {
+            'utterance': utterance,
+            'averaged_CMOS': cmos_avg,
+            'number_of_CMOS_scores': cmos_count,
+            'averaged_SMOS': smos_avg,
+            'number_of_SMOS_scores': smos_count
+        }
+    
+    return utterance_results
+
+def save_utterance_results_to_json(utterance_results, output_file='utterance_results.json'):
+    """Save per-utterance results to JSON file"""
+    # Convert to list format for JSON
+    results_list = list(utterance_results.values())
+    
+    with open(output_file, 'w') as f:
+        json.dump(results_list, f, indent=2)
+    
+    print(f"Per-utterance results saved to {output_file}")
+    return results_list
+
 def main(directory_path):
     """Main analysis function"""
     # Load and filter files based on attention checks
@@ -233,6 +305,11 @@ def main(directory_path):
     # Print and save results
     print_results(cmos_results, smos_results)
     save_results_to_csv(cmos_results, smos_results, output_file=f"{directory_path}/tts_results.csv")
+
+    # Analyze per utterance
+    utterance_results = analyze_per_utterance(valid_results)
+    utterance_json = save_utterance_results_to_json(utterance_results, 
+                                                   output_file=f"{directory_path}/utterance_results.json")
     
     return cmos_results, smos_results
 
