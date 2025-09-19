@@ -227,7 +227,7 @@ def analyze_per_utterance(results):
         # Determine target system (use ref_system if swap is True)
         if result['swap']:
             target_system = result['ref_system']
-            audio_path = result['ref_audio']
+            audio_path = result['reference_audio']
             score = -score
         else:
             target_system = result['target_system']
