@@ -225,6 +225,8 @@ def analyze_per_utterance(results):
         # Extract utterance identifier from the audio path
         # Assuming the utterance ID is in the filename
         # Determine target system (use ref_system if swap is True)
+        score = result['score']
+        
         if result['swap']:
             target_system = result['ref_system']
             audio_path = result['reference_audio']
@@ -234,8 +236,6 @@ def analyze_per_utterance(results):
             audio_path = result['target_audio']
         # Extract utterance ID from filename (adjust this logic based on your filename format)
         utterance = os.path.splitext(os.path.basename(audio_path))[0]
-        
-        score = result['score']
             
         if not target_system:
             continue
