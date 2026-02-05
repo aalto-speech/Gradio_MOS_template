@@ -457,25 +457,28 @@ def plot_dns_mos_scatter(dns_scores: Dict[str, float],
     plt.savefig(save_plot, dpi=300, bbox_inches='tight')
     print(f"Plot saved as: {save_plot}")
 
-def plot_bland_altman(dns_scores: Dict[str, float], 
-                     mos_scores: Dict[str, float],
-                     save_plot: Optional[str] = None,
-                     figure_size: Tuple[int, int] = (10, 8)) -> None:
+def plot_bland_altman_with_regression(dns_scores: Dict[str, float], 
+                                      mos_scores: Dict[str, float],
+                                      save_plot: Optional[str] = None,
+                                      figure_size: Tuple[int, int] = (10, 8)) -> Tuple[float, float]:
     """
-    Create a Bland-Altman plot between DNSMOS and MOS scores.
+    Create a Bland-Altman plot with linear regression line and return the regression equation.
     
     Args:
         dns_scores: Dictionary of filename -> DNSMOS score
         mos_scores: Dictionary of filename -> MOS score  
         save_plot: Optional filename to save the plot
         figure_size: Tuple of (width, height) for the figure size
+        
+    Returns:
+        Tuple of (slope, intercept) for the linear equation: difference = slope * mean + intercept
     """
     # Find common filenames
     common_files = set(dns_scores.keys()) & set(mos_scores.keys())
     
     if len(common_files) == 0:
         print("No common files found between DNSMOS and MOS data")
-        return
+        return 0.0, 0.0
     
     # Extract paired scores
     dns_values = np.array([dns_scores[filename] for filename in common_files])
@@ -491,6 +494,20 @@ def plot_bland_altman(dns_scores: Dict[str, float],
     # 95% limits of agreement
     upper_loa = mean_diff + 1.96 * std_diff
     lower_loa = mean_diff - 1.96 * std_diff
+    
+    # Fit linear regression: diff = slope * mean + intercept
+    coefficients = np.polyfit(mean_scores, diff_scores, 1)
+    slope, intercept = coefficients
+    
+    # Generate regression line points
+    x_line = np.linspace(mean_scores.min(), mean_scores.max(), 100)
+    y_line = slope * x_line + intercept
+    
+    # Calculate R-squared
+    y_pred = slope * mean_scores + intercept
+    ss_res = np.sum((diff_scores - y_pred) ** 2)
+    ss_tot = np.sum((diff_scores - mean_diff) ** 2)
+    r_squared = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
     
     # Create Bland-Altman plot
     plt.figure(figsize=figure_size)
@@ -508,21 +525,27 @@ def plot_bland_altman(dns_scores: Dict[str, float],
     plt.axhline(lower_loa, color='red', linestyle='--', linewidth=2, 
                 label=f'Lower LoA: {lower_loa:.3f}')
     
+    # Regression line
+    plt.plot(x_line, y_line, color='green', linestyle='-', linewidth=2,
+             label=f'Linear fit: y = {slope:.4f}x + {intercept:.4f}')
+    
     # Zero reference line
     plt.axhline(0, color='gray', linestyle='-', linewidth=1, alpha=0.5)
     
     # Customize the plot
     plt.xlabel('Average of DNSMOS and MOS Scores', fontsize=18)
     plt.ylabel('Difference (DNSMOS - MOS)', fontsize=18)
-    plt.title(f'Bland-Altman Plot: DNSMOS vs MOS', fontsize=18, pad=20)
+    plt.title(f'Bland-Altman Plot with Linear Regression: DNSMOS vs MOS', fontsize=18, pad=20)
     plt.grid(True, alpha=0.3)
-    plt.legend(loc='best', fontsize=18)
+    plt.legend(loc='best', fontsize=14)
     
     # Add statistics text box
-    stats_text = f'Mean ± SD: {mean_diff:.3f} ± {std_diff:.3f}\n95% LoA: [{lower_loa:.3f}, {upper_loa:.3f}]'
-    # plt.text(0.05, 0.05, stats_text, transform=plt.gca().transAxes, 
-    #          bbox=dict(boxstyle='round', facecolor='white', alpha=0.8),
-    #          verticalalignment='bottom', fontsize=18)
+    stats_text = (f'Mean ± SD: {mean_diff:.3f} ± {std_diff:.3f}\n'
+                  f'95% LoA: [{lower_loa:.3f}, {upper_loa:.3f}]\n'
+                  f'R² = {r_squared:.4f}')
+    plt.text(0.05, 0.95, stats_text, transform=plt.gca().transAxes, 
+             bbox=dict(boxstyle='round', facecolor='white', alpha=0.8),
+             verticalalignment='top', fontsize=14)
     
     plt.tight_layout()
     
@@ -532,6 +555,18 @@ def plot_bland_altman(dns_scores: Dict[str, float],
         print(f"Plot saved as: {save_plot}")
     else:
         plt.show()
+    
+    # Print regression equation
+    print("\n" + "="*50)
+    print("BLAND-ALTMAN LINEAR REGRESSION")
+    print("="*50)
+    print(f"Linear equation: Difference = {slope:.6f} × Mean + {intercept:.6f}")
+    print(f"Where: Difference = DNSMOS - MOS")
+    print(f"       Mean = (DNSMOS + MOS) / 2")
+    print(f"R-squared: {r_squared:.6f}")
+    print(f"Number of samples: {len(common_files)}")
+    
+    return slope, intercept
 
 def print_correlation_results(correlation: float, p_value: float, n_samples: int) -> None:
     """
@@ -697,7 +732,12 @@ def main():
                 correlation, p_value, n_samples = calculate_spearman_correlation(scores, mos_scores)
                 print_correlation_results(correlation, p_value, n_samples)
 
-                plot_bland_altman(scores, mos_scores, save_plot="dns_mos_bland_altman.png")
+                slope, intercept = plot_bland_altman_with_regression(
+                    scores, mos_scores, 
+                    save_plot="results/dns_mos_bland_altman_regression.png"
+                )
+
+                print(f"\nBland-Altman regression equation: Difference = {slope:.6f} × Mean + {intercept:.6f}")
     
     # Handle JSON output
     if args.output_file:
