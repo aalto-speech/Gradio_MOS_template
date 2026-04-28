@@ -52,7 +52,7 @@ Top level directory
 }
 ```
 
-To create such *Test List*, you can refer to one of the example under `test_list_builders`, for example the local filesystem [one](https://github.com/aalto-speech/Gradio_MOS_template/blob/main/test_list_builders/local_fs/generate.py). It can be run as:
+To create such *Test List*, you can refer to one of the example under `test_list_builders`, for example the local filesystem [one](https://github.com/aalto-speech/Gradio_MOS_template/blob/main/test_list_builders/local_fs/generate.py) and its corresponding [configs](https://github.com/aalto-speech/Gradio_MOS_template/tree/main/test_list_builders/local_fs/config). It can be run as:
 ```bash
 uv run test_list_builders/local_fs/generate.py \
     --config_name finnish \ # One of the config name under the test_list_builders config path
