@@ -245,6 +245,45 @@ class CMOSInstructionPage(CMOSPage):
         - It's very important to trust your first impression and not overthink your answer.
         """
 
+class EmphasisPreferencePage(TestPage):
+    def __init__(self, test_case):
+        super().__init__(test_case)
+        self.transcript = test_case.get("transcript", "")
+
+    def get_instructions(self):
+        return """
+        ### Emphasis Preference Test
+        Given the text, with the emphasized word wrapped in asterisk (*), please listen to sample A and B, and choose your preference over these two samples.
+        
+        Tips:
+        - Two samples might belong to different speakers with different recording conditions and different speaking style.
+        - Please finish listening the given audio before submitting your score.
+        - It's very important to trust your first impression and not overthink your answer.
+        """
+    
+    def get_slider_config(self):
+        return -1, 1, 0
+    
+    def get_level_label(self):
+        return [
+            "Prefer sample A",
+            "No preference",
+            "Prefer sample B"
+        ]
+    
+class EmphasisPreferenceInstructionPage(EmphasisPreferencePage):
+    def get_instructions(self):
+        return """
+        ### Emphasis Preference Test - Instruction
+        Given the text, with the emphasized word wrapped in asterisk (*), please listen to sample A and B, and choose your preference over these two samples, in terms of the way they emphasize the selected word(s).
+
+        **This is an instruction question, and it will not count towards the final results.**
+        
+        Tips:
+        - Two samples might belong to different speakers with different recording conditions and different speaking style.
+        - Please finish listening the given audio before submitting your score.
+        - It's very important to trust your first impression and not overthink your answer.
+        """
 
 class AttentionPage(CMOSPage):
     """Attention check page"""
@@ -252,8 +291,6 @@ class AttentionPage(CMOSPage):
     def get_instructions(self):
         return """
         ### Attention Check
-        Audio A and Audio B are identical, they are both instructions to you on how to rate this question.
-
         Please rate as the audio instructed.
         - Scale: -3 to 3
 
@@ -358,6 +395,8 @@ class PageFactory:
         "QMOS": QMOSPage,
         "qmos_instruction": QMOSInstructionPage,
         "qmos_negative_instruction": QMOSNegativeInstructionPage,
+        "empha_pref": EmphasisPreferencePage,
+        "empha_pref_instruction": EmphasisPreferenceInstructionPage
     }
     
     @classmethod
