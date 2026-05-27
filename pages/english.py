@@ -206,8 +206,8 @@ class CMOSPage(TestPage):
         ### Comparative Mean Opinion Score Test (CMOS)
         Please compare how human-sounded of the sample B against the sample A.
         - Scale: -3 to +3
-        - Negative: Sample A is more human-sounded
-        - Positive: Sample B is more human-sounded
+        - Negative: Sample A is more human-like
+        - Positive: Sample B is more human-like
         - 0: Equal quality
         
         Tips:
@@ -220,10 +220,15 @@ class CMOSPage(TestPage):
         return -3, 3, 0
     
     def get_level_label(self):
-        return ["Sample A is much better", "Sample A is better",
-                "Sample A is slightly better", "Equal quality",
-                "Sample B is slightly better", "Sample B is better",
-                "Sample B is much better"]
+        return [
+            "Sample A is much more human-like.", 
+            "Sample A is more human-like.",
+            "Sample A is slightly more human-like.", 
+            "Both samples are equal human-like.",
+            "Sample B is slightly more human-like.", 
+            "Sample B is more human-like.",
+            "Sample B is much more human-like."
+        ]
 
 
 class CMOSInstructionPage(CMOSPage):
@@ -234,8 +239,8 @@ class CMOSInstructionPage(CMOSPage):
         ### Comparative Mean Opinion Score Test (CMOS) - **Instruction**
         Please compare how human-sounded of the sample B against the sample A.
         - Scale: -3 to +3
-        - Negative: Sample A is more human-sounded
-        - Positive: Sample B is more human-sounded
+        - Negative: Sample A is more human-like
+        - Positive: Sample B is more human-like
         - 0: Equal quality
         - **For this instruction example, you should give a score of 0 since both are natural speech with equal quality**
 

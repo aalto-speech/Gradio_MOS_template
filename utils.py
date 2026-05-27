@@ -68,5 +68,8 @@ class TestCasesSampler:
                     }
                     cmos_cases[i] = new_case
             sampled_cases["CMOS"] = cmos_cases
-        
+
+        if "empha_pref" in sampled_cases:
+            random.shuffle(sampled_cases["empha_pref"])
+
         return sampled_cases

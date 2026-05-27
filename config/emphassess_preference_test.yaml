@@ -1,0 +1,50 @@
+sampler:
+  test_list_path: test_lists/emphasis_preference.json
+  sample_size_per_test: 10
+gradio:
+  server_name: 127.0.0.1
+  server_port: 52705
+  root_path: /mos
+  share: false
+  show_error: true
+  allowed_paths:
+    - cwd
+
+num_attention: 3
+
+# Need to be fixed
+attention_checks:
+  - type: 'attention'
+    reference: 'audios/attention_check_english/-3.wav'
+    target: 'audios/attention_check_english/-3.wav'
+  - type: 'attention'
+    reference: 'audios/attention_check_english/-2.wav'
+    target: 'audios/attention_check_english/-2.wav'
+  - type: 'attention'
+    reference: 'audios/attention_check_english/-1.wav'
+    target: 'audios/attention_check_english/-1.wav'
+  - type: 'attention'
+    reference: 'audios/attention_check_english/0.wav'
+    target: 'audios/attention_check_english/0.wav'
+  - type: 'attention'
+    reference: 'audios/attention_check_english/1.wav'
+    target: 'audios/attention_check_english/1.wav'
+  - type: 'attention'
+    reference: 'audios/attention_check_english/2.wav'
+    target: 'audios/attention_check_english/2.wav'
+  - type: 'attention'
+    reference: 'audios/attention_check_english/3.wav'
+    target: 'audios/attention_check_english/3.wav'
+
+# Need to be fixed as fresh audio
+instructions:
+  - type: "empha_pref_instruction"
+    reference: "audios/emphasis_preference_instruction_audio/ex01_emph_eval_00004.wav"
+    target: "audios/emphasis_preference_instruction_audio/ex02_emph_eval_00004.wav"
+    transcript: "A dishonest *politician* who admits it?"
+
+language: english
+
+hydra:
+  run:
+    dir: ./test_${language}/${now:%Y-%m-%d}/${now:%H-%M-%S}
