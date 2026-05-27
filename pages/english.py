@@ -299,8 +299,19 @@ class AttentionPage(CMOSPage):
         Please rate as the audio instructed.
         - Scale: -3 to 3
 
-        Even though the audios are identical, **please finish listening both audios before submit your answers.**
+        **Please finishing listen to both audio before submit your answers.**
         """
+    
+    def get_level_label(self):
+        return [
+            "Sample A is much better.", 
+            "Sample A is better.",
+            "Sample A is slightly better.", 
+            "Both samples are equally good.",
+            "Sample B is slightly better.", 
+            "Sample B is better.",
+            "Sample B is much better."
+        ]
 
 
 
