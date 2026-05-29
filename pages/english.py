@@ -259,6 +259,11 @@ class EmphasisPreferencePage(TestPage):
         return """
         ### Emphasis Preference Test
         Given the text, with the emphasized word wrapped in asterisk (*), please listen to sample A and B, and choose your preference over these two samples.
+
+        You might prefer a sample due to the following ways:
+        1. The sample is intelligible.
+        2. The localization of the emphasized words are accurate.
+        3. You like the way how the words are emphasized.
         
         Tips:
         - Two samples might belong to different speakers with different recording conditions and different speaking style.
@@ -283,6 +288,11 @@ class EmphasisPreferenceInstructionPage(EmphasisPreferencePage):
         Given the text, with the emphasized word wrapped in asterisk (*), please listen to sample A and B, and choose your preference over these two samples, in terms of the way they emphasize the selected word(s).
 
         **This is an instruction question, and it will not count towards the final results.**
+
+        You might prefer a sample due to the following ways:
+        1. The sample is intelligible.
+        2. The localization of the emphasized words are accurate.
+        3. You like the way how the words are emphasized.
         
         Tips:
         - Two samples might belong to different speakers with different recording conditions and different speaking style.
