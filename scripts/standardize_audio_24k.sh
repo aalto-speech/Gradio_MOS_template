@@ -12,7 +12,7 @@ for dir in "$@"; do
     echo "Processing: $dir"
     find "$dir" -name "*.wav" | while IFS= read -r f; do
         tmp="${f%/*}/tmp_${f##*/}"
-        sox -- "$f" -r 24000 -c 1 "$tmp" && mv -- "$tmp" "$f"
+        sox -- "$f" -r 24000 -c 1 "$tmp" norm -3 && mv -- "$tmp" "$f"
         echo "  Resampled: $f"
     done
 done
