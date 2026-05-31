@@ -60,7 +60,7 @@ class SMOSPage(TestPage):
         return """
         ### Speaker Similarity Test (SMOS)
         Please rate how similar the voice in the target audio is to the reference audio.
-        - Scale: 1-5 (1: Very Different, 5: Very Similar)
+        - Scale: 1-5 (1: not the same speaker, 5: definitely the same speaker)
         - The audios are recorded under various conditions, so please focus on the speaker's voice characteristics.
         - Please finish listening to both audios before submitting your score.
         - It's very important to trust your first impression and not overthink your answer.
@@ -70,7 +70,13 @@ class SMOSPage(TestPage):
         return 1, 5, 3  # min, max, default
     
     def get_level_label(self):
-        return ["Very Different", "Different", "Slightly Different", "Similar", "Very Similar"]
+        return [
+            "They are not the same speaker.", 
+            "They probably are not the same speaker.",
+            "I can't say", 
+            "They probably are the same speaker.",
+            "They are the same speaker.", 
+        ]
 
 
 class SMOSInstructionPage(SMOSPage):
