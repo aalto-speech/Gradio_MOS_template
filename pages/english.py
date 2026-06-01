@@ -60,7 +60,7 @@ class SMOSPage(TestPage):
         return """
         ### Speaker Similarity Test (SMOS)
         Please rate how similar the voice in sample B is to sample A.
-        - Scale: 1-5 (1: not the same speaker, 5: definitely the same speaker)
+        - Scale: -2 to 2 (-2: not the same speaker, 2: definitely the same speaker)
         - The audios are recorded under various conditions, so please focus on the speaker's voice characteristics.
         - Please finish listening to both audios before submitting your score.
         - It's very important to trust your first impression and not overthink your answer.
@@ -88,11 +88,11 @@ class SMOSInstructionPage(SMOSPage):
         **This is an instruction example where both audios are from the same speaker with different content.**
         
         Please rate how similar the voice in the target audio is to the reference audio.
-        - Scale: 1-5 (1: Very Different, 5: Very Similar)
+        - Scale: -2 to 2 (-2: definitely not the same speaker, 2: definitely the same speaker)
         - The audios are recorded under various conditions, so please focus on the speaker's voice characteristics.
         - Please finish listening to both audios before submitting your score.
         - It's very important to trust your first impression and not overthink your answer.
-        - **For this instruction example, you should give a score of 5 since it's the same speaker**
+        - **For this instruction example, you should give a score of 2 since it's the same speaker**
         """
 
 class NMOSPage(NoReferencePage):
@@ -295,9 +295,9 @@ class EmphasisPreferenceInstructionPage(EmphasisPreferencePage):
 
         **This is an instruction question, and it will not count towards the final results.**
 
-        You might prefer a sample due to the following ways:
-        1. The sample is intelligible.
-        2. The localization of the emphasized words are accurate.
+        Use the following criteria to choose your preference:
+        1. The localization of the emphasis is accurate.
+        2. The sample matches the transcript.
         3. You like the way how the words are emphasized.
         
         Tips:
