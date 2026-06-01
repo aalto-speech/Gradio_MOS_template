@@ -364,7 +364,8 @@ class MOSTest:
                     interactive=False,
                     lines=3,
                     value="",
-                    visible=False
+                    visible=False,
+                    show_label=False,
                 )
 
                 with gr.Row():
