@@ -59,7 +59,7 @@ class SMOSPage(TestPage):
     def get_instructions(self):
         return """
         ### Speaker Similarity Test (SMOS)
-        Please rate how similar the voice in the target audio is to the reference audio.
+        Please rate how similar the voice in sample B is to sample A.
         - Scale: 1-5 (1: not the same speaker, 5: definitely the same speaker)
         - The audios are recorded under various conditions, so please focus on the speaker's voice characteristics.
         - Please finish listening to both audios before submitting your score.
@@ -67,7 +67,7 @@ class SMOSPage(TestPage):
         """
     
     def get_slider_config(self):
-        return 1, 5, 3  # min, max, default
+        return -2, 2, 0  # min, max, default
     
     def get_level_label(self):
         return [
@@ -266,9 +266,9 @@ class EmphasisPreferencePage(TestPage):
         ### Emphasis Preference Test
         Given the text, with the emphasized word wrapped in asterisk (*), please listen to sample A and B, and choose your preference over these two samples.
 
-        You might prefer a sample due to the following ways:
-        1. The sample is intelligible.
-        2. The localization of the emphasized words are accurate.
+        Use the following criteria to choose your preference:
+        1. The localization of the emphasis is accurate.
+        2. The sample matches the transcript.
         3. You like the way how the words are emphasized.
         
         Tips:

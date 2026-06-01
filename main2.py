@@ -360,7 +360,7 @@ class MOSTest:
                 # EmphasisPreference-specific elements
                 empha_transcript_label = gr.Markdown("### Transcript:", visible=False)
                 empha_transcript = gr.Textbox(
-                    label="Transcript",
+                    # label="Transcript",
                     interactive=False,
                     lines=3,
                     value="",
