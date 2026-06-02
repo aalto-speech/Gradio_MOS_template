@@ -2,6 +2,8 @@ import json
 import sys
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 from collections import defaultdict
 import os
 import glob
@@ -138,6 +140,84 @@ def print_preference_results(pref_results):
         print(f"{data['ref_system']:<22} {data['target_system']:<22} {a_str:>8} {n_str:>8} {b_str:>8} {data['n_samples']:>5}")
 
 
+def plot_preference_results(pref_results, output_file='preference_plot.png'):
+    """Plot win-tie-loss stacked bars grouped by System B (target_system).
+
+    Each subplot covers one System B; bars within it correspond to System A comparisons.
+    Green = B preferred (win), gray = no preference (tie), red = A preferred (loss).
+    """
+    groups = defaultdict(list)
+    for pair_key, data in pref_results.items():
+        groups[data['target_system']].append(data)
+
+    system_b_order = {'F5TTS': 0, 'F5TTS-DP-SFT': 1, 'F5TTS-DP-GRPO': 2}
+    sorted_groups = sorted(groups.items(), key=lambda x: system_b_order.get(x[0], 99))
+    n_groups = len(sorted_groups)
+
+    fig, axes = plt.subplots(n_groups, 1, figsize=(7, 3.2 * n_groups), sharey=False)
+    if n_groups == 1:
+        axes = [axes]
+
+    win_color  = '#4CAF50'  # B preferred
+    tie_color  = '#B0BEC5'  # no preference
+    loss_color = '#EF5350'  # A preferred
+
+    for i_ax, (ax, (system_b, pairs)) in enumerate(zip(axes, sorted_groups)):
+        pairs = sorted(pairs, key=lambda p: p['ref_system'])
+        labels = [p['ref_system'] for p in pairs]
+        wins   = [p['b_pref_ratio'] for p in pairs]
+        ties   = [p['no_pref_ratio'] for p in pairs]
+        losses = [p['a_pref_ratio'] for p in pairs]
+        bottoms_tie = losses
+        bottoms_win = [l + t for l, t in zip(losses, ties)]
+
+        y = np.arange(len(pairs))
+        height = 0.45
+
+        ax.barh(y, losses, height, color=loss_color)
+        ax.barh(y, ties,   height, left=bottoms_tie, color=tie_color)
+        ax.barh(y, wins,   height, left=bottoms_win, color=win_color)
+
+        # Percentage labels inside each segment (skip if too narrow)
+        for j, (l, t, w) in enumerate(zip(losses, ties, wins)):
+            if l > 0.07:
+                ax.text(l / 2, j, f'{l:.0%}', ha='center', va='center', fontsize=8, color='white')
+            if t > 0.07:
+                ax.text(l + t / 2, j, f'{t:.0%}', ha='center', va='center', fontsize=8, color='white')
+            if w > 0.07:
+                ax.text(l + t + w / 2, j, f'{w:.0%}', ha='center', va='center', fontsize=8, color='white')
+
+        # Subplot title: make the target system name prominent
+        ax.set_title(f'Target system:\n{system_b}', fontweight='bold', pad=10, fontsize=10)
+        ax.set_yticks(y)
+        # Only the leftmost subplot gets y-tick labels; label the axis on all
+        ax.set_yticklabels(labels, fontsize=9)
+        ax.set_ylabel('Reference system', fontsize=9)
+        ax.set_xlim(0, 1)
+        ax.set_xlabel('Share of listeners', fontsize=9)
+        ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f'{v:.0%}'))
+        ax.axvline(x=0.5, color='black', linestyle='--', linewidth=0.8, alpha=0.4)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+
+    legend_handles = [
+        mpatches.Patch(color=loss_color, label='Prefers reference'),
+        mpatches.Patch(color=tie_color,  label='No preference'),
+        mpatches.Patch(color=win_color,  label='Prefers target'),
+    ]
+    fig.legend(handles=legend_handles, loc='lower center', bbox_to_anchor=(0.5, 0),
+               ncol=3, frameon=False, fontsize=10)
+    fig.suptitle('Emphasis Preference Test', fontsize=13, fontweight='bold', y=1.01)
+    fig.text(0.5, 0.985,
+             'Share of listeners preferring the target system over each reference system',
+             ha='center', va='top', fontsize=9, color='#555555')
+
+    plt.tight_layout(rect=[0, 0.06, 1, 0.965])
+    plt.savefig(output_file, bbox_inches='tight', dpi=150)
+    plt.close()
+    print(f"Plot saved to {output_file}")
+
+
 def save_preference_to_csv(pref_results, output_file='preference_results.csv'):
     """Save preference results to CSV"""
     rows = []
@@ -175,6 +255,7 @@ def main(directory_path):
     pref_results = analyze_preference(valid_results)
     print_preference_results(pref_results)
     save_preference_to_csv(pref_results, output_file=f"{directory_path}/preference_results.csv")
+    plot_preference_results(pref_results, output_file=f"{directory_path}/preference_plot.png")
 
     return pref_results
 
