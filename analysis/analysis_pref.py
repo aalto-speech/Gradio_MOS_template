@@ -163,12 +163,15 @@ def plot_preference_results(pref_results, output_file='preference_plot.png'):
         mpatches.Patch(color=win_color,  label='Prefers proposed'),
     ]
 
+    system_b_display = {'F5TTS': 'F5TTS-SFT'}
+    ref_display = {'Qwen3-TTS': 'Qwen3-TTS-VD'}
+
     base, ext = os.path.splitext(output_file)
 
     for system_b, pairs in sorted_groups:
         pairs = sorted(pairs, key=lambda p: (p['ref_system'] == 'GroundTruth', p['ref_system']))
         n = len(pairs)
-        labels = [p['ref_system'] for p in pairs]
+        labels = [ref_display.get(p['ref_system'], p['ref_system']) for p in pairs]
         wins   = [p['b_pref_ratio'] for p in pairs]
         ties   = [p['no_pref_ratio'] for p in pairs]
         losses = [p['a_pref_ratio'] for p in pairs]
@@ -195,7 +198,7 @@ def plot_preference_results(pref_results, output_file='preference_plot.png'):
         ax.set_yticks(y)
         ax.set_yticklabels(labels, fontsize=11)
         ax.set_ylim(-0.5, n - 0.5)
-        ax.set_ylabel('Baseline system', fontsize=10)
+        ax.set_ylabel('Baselines', fontsize=10)
         ax.set_xlim(0, 1)
         ax.set_xlabel('Share of listeners', fontsize=10)
         ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f'{v:.0%}'))
@@ -206,12 +209,12 @@ def plot_preference_results(pref_results, output_file='preference_plot.png'):
         ax.legend(handles=legend_handles, loc='lower center',
                   bbox_to_anchor=(0.5, -0.28), ncol=3, frameon=False, fontsize=10)
 
-        ax.set_title(f'Emphasis Preference Test  —  Proposed system: {system_b}',
+        ax.set_title(f'Proposed system: {system_b_display.get(system_b, system_b)}',
                      fontweight='bold', fontsize=12, pad=10)
 
         plt.tight_layout()
         path = f'{base}_{system_b}{ext}'
-        plt.savefig(path, bbox_inches='tight', dpi=150)
+        plt.savefig(path, bbox_inches='tight', dpi=300)
         plt.close()
         print(f"Plot saved to {path}")
 
@@ -253,7 +256,7 @@ def main(directory_path):
     pref_results = analyze_preference(valid_results)
     print_preference_results(pref_results)
     save_preference_to_csv(pref_results, output_file=f"{directory_path}/preference_results.csv")
-    plot_preference_results(pref_results, output_file=f"{directory_path}/preference_plot.png")
+    plot_preference_results(pref_results, output_file=f"{directory_path}/preference_plot.pdf")
 
     return pref_results
 
