@@ -157,13 +157,16 @@ def plot_preference_results(pref_results, output_file='preference_plot.png'):
     tie_color  = '#B0BEC5'
     loss_color = '#EF5350'
 
-    legend_handles = [
-        mpatches.Patch(color=loss_color, label='Prefers baseline'),
-        mpatches.Patch(color=tie_color,  label='No preference'),
-        mpatches.Patch(color=win_color,  label='Prefers proposed'),
-    ]
-
-    system_b_display = {'F5TTS': 'F5TTS-SFT'}
+    system_b_display = {
+        'F5TTS':         r'$\mathcal{M}_{\mathrm{TTS-SFT}}$',
+        'F5TTS-DP-SFT':  r'$\mathcal{M}_{\mathrm{TTS-DP-SFT}}$',
+        'F5TTS-DP-GRPO': 'EmphTTS',
+    }
+    system_b_role = {
+        'F5TTS':         'Ablation system',
+        'F5TTS-DP-SFT':  'Ablation system',
+        'F5TTS-DP-GRPO': 'Proposed system',
+    }
     ref_display = {'Qwen3-TTS': 'Qwen3-TTS-VD'}
 
     base, ext = os.path.splitext(output_file)
@@ -206,10 +209,17 @@ def plot_preference_results(pref_results, output_file='preference_plot.png'):
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
 
+        role = system_b_role.get(system_b, 'Proposed system')
+        proposed_label = 'Prefers ablation' if role == 'Ablation system' else 'Prefers proposed'
+        legend_handles = [
+            mpatches.Patch(color=loss_color, label='Prefers baseline'),
+            mpatches.Patch(color=tie_color,  label='No preference'),
+            mpatches.Patch(color=win_color,  label=proposed_label),
+        ]
         ax.legend(handles=legend_handles, loc='lower center',
                   bbox_to_anchor=(0.5, -0.28), ncol=3, frameon=False, fontsize=10)
 
-        ax.set_title(f'Proposed system: {system_b_display.get(system_b, system_b)}',
+        ax.set_title(f'{role}: {system_b_display.get(system_b, system_b)}',
                      fontweight='bold', fontsize=12, pad=10)
 
         plt.tight_layout()
