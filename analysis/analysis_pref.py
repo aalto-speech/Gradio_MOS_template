@@ -241,6 +241,62 @@ def save_preference_to_csv(pref_results, output_file='preference_results.csv'):
     print(f"\nResults saved to {output_file}")
 
 
+def winning_utterances(results, ref_system, target_system, output_file=None):
+    """Return utterances where target_system wins the majority vote against ref_system.
+
+    Majority = more votes for proposed than for baseline among all valid listeners.
+    Saves a CSV if output_file is given.
+    """
+    pair_results = [
+        r for r in results
+        if r['ref_system'] == ref_system and r['target_system'] == target_system
+    ]
+
+    utterance_votes = defaultdict(lambda: {'baseline': 0, 'tie': 0, 'proposed': 0, 'transcript': ''})
+
+    for r in pair_results:
+        score = r['score'] if not r['swap'] else -r['score']
+        # Derive utterance ID from whichever audio path is the target (canonical side)
+        audio_path = r['target_audio'] if not r['swap'] else r['reference_audio']
+        utt_id = os.path.splitext(os.path.basename(audio_path))[0]
+
+        if score < 0:
+            utterance_votes[utt_id]['baseline'] += 1
+        elif score == 0:
+            utterance_votes[utt_id]['tie'] += 1
+        else:
+            utterance_votes[utt_id]['proposed'] += 1
+
+        if r.get('transcript'):
+            utterance_votes[utt_id]['transcript'] = r['transcript']
+
+    rows = []
+    for utt_id, counts in sorted(utterance_votes.items()):
+        total = counts['baseline'] + counts['tie'] + counts['proposed']
+        rows.append({
+            'utterance': utt_id,
+            'proposed_votes': counts['proposed'],
+            'tie_votes': counts['tie'],
+            'baseline_votes': counts['baseline'],
+            'total_votes': total,
+            'winner': 'proposed' if counts['proposed'] > counts['baseline'] else
+                      ('baseline' if counts['baseline'] > counts['proposed'] else 'tie'),
+            'transcript': counts['transcript'],
+        })
+
+    df = pd.DataFrame(rows)
+    winners = df[df['winner'] == 'proposed'].sort_values('proposed_votes', ascending=False)
+
+    print(f"\nWinning utterances for {target_system} vs {ref_system}: {len(winners)} / {len(df)}")
+    print(winners[['utterance', 'proposed_votes', 'tie_votes', 'baseline_votes', 'transcript']].to_string(index=False))
+
+    if output_file:
+        winners.to_csv(output_file, index=False)
+        print(f"Saved to {output_file}")
+
+    return winners
+
+
 def main(directory_path):
     """Main analysis function"""
     valid_results = load_and_filter_json_files(directory_path)
@@ -257,6 +313,13 @@ def main(directory_path):
     print_preference_results(pref_results)
     save_preference_to_csv(pref_results, output_file=f"{directory_path}/preference_results.csv")
     plot_preference_results(pref_results, output_file=f"{directory_path}/preference_plot.pdf")
+
+    winning_utterances(
+        valid_results,
+        ref_system='GroundTruth',
+        target_system='F5TTS-DP-GRPO',
+        output_file=f"{directory_path}/winning_utterances_GRPO_vs_GT.csv",
+    )
 
     return pref_results
 
