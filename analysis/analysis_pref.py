@@ -5,6 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from collections import defaultdict
+from scipy import stats
 import os
 import glob
 
@@ -79,9 +80,9 @@ def analyze_preference(results):
        0 = no preference
        1 = target_system (B) preferred
     """
-    # pair_key -> {'a_pref': int, 'no_pref': int, 'b_pref': int}
     pair_counts = defaultdict(lambda: {'a_pref': 0, 'no_pref': 0, 'b_pref': 0,
-                                       'ref_system': None, 'target_system': None})
+                                       'ref_system': None, 'target_system': None,
+                                       'scores': []})
 
     for result in results:
         ref_system = result['ref_system']
@@ -97,6 +98,7 @@ def analyze_preference(results):
         # Normalize score: when swapped, the participant saw target on the left and ref on
         # the right, so a positive raw score means ref was preferred — flip to canonical form.
         score = result['score'] if not result['swap'] else -result['score']
+        pair_counts[pair_key]['scores'].append(score)
 
         if score < 0:
             pair_counts[pair_key]['a_pref'] += 1
@@ -105,9 +107,38 @@ def analyze_preference(results):
         else:
             pair_counts[pair_key]['b_pref'] += 1
 
+    rng = np.random.default_rng(42)
+
     pref_results = {}
     for pair_key, counts in pair_counts.items():
         total = counts['a_pref'] + counts['no_pref'] + counts['b_pref']
+        a_votes, tie_votes, b_votes = counts['a_pref'], counts['no_pref'], counts['b_pref']
+        scores_arr = np.array(counts['scores'])
+
+        # Split-ties exact binomial: each tie counts as half a vote for each side.
+        # Doubling everything keeps the counts integer: tie -> 1 vote each side.
+        b_votes_doubled = 2 * b_votes + tie_votes
+        total_doubled = 2 * total
+        if total_doubled > 0:
+            # H0: P(B) <= 0.5 -- is B significantly preferred over A?
+            p_split_ties = stats.binomtest(b_votes_doubled, total_doubled, p=0.5, alternative='greater').pvalue
+            # H0: P(A) <= 0.5 -- is A significantly preferred over B?
+            a_votes_doubled = 2 * a_votes + tie_votes
+            p_split_ties_a_gt_b = stats.binomtest(a_votes_doubled, total_doubled, p=0.5, alternative='greater').pvalue
+        else:
+            p_split_ties = 1.0
+            p_split_ties_a_gt_b = 1.0
+
+        # Bootstrap 95% CI on the win-rate (ties excluded).
+        # Each resample recomputes win-rate = b_pref / (a_pref + b_pref).
+        decisive_scores = scores_arr[scores_arr != 0]
+        if len(decisive_scores) > 0:
+            boot = rng.choice(decisive_scores, size=(5000, len(decisive_scores)), replace=True)
+            boot_winrate = (boot > 0).mean(axis=1)
+            ci_low, ci_high = np.percentile(boot_winrate, [2.5, 97.5])
+        else:
+            ci_low, ci_high = None, None
+
         pref_results[pair_key] = {
             'ref_system': counts['ref_system'],
             'target_system': counts['target_system'],
@@ -118,26 +149,47 @@ def analyze_preference(results):
             'no_pref_ratio': counts['no_pref'] / total if total > 0 else None,
             'b_pref_ratio': counts['b_pref'] / total if total > 0 else None,
             'n_samples': total,
+            'p_split_ties': p_split_ties,
+            'p_split_ties_a_gt_b': p_split_ties_a_gt_b,
+            'ci_low': ci_low,
+            'ci_high': ci_high,
         }
 
     return pref_results
 
 
+def significance_stars(p):
+    if p < 0.001: return '***'
+    if p < 0.01:  return '**'
+    if p < 0.05:  return '*'
+    return 'ns'
+
+
+def _p_cell(p):
+    return f"{p:.4f}{significance_stars(p)}"
+
+
 def print_preference_results(pref_results):
     """Print formatted preference results"""
     print("\nPREFERENCE RESULTS")
-    print("-" * 90)
-    header = f"{'System A (ref)':<22} {'System B (target)':<22} {'A pref':>8} {'No pref':>8} {'B pref':>8} {'N':>5}"
+    print("-" * 130)
+    header = (f"{'System A (ref)':<22} {'System B (target)':<22} {'A pref':>8} {'No pref':>8} {'B pref':>8} "
+              f"{'±95% CI':>8} {'N':>5} {'B>A (SplitTie)':>16} {'A>B (SplitTie)':>16}")
     print(header)
-    print("-" * 90)
+    print("-" * 130)
 
     for pair_key in sorted(pref_results.keys()):
         data = pref_results[pair_key]
-        a_str = f"{data['a_pref_ratio']:.1%}" if data['a_pref_ratio'] is not None else "N/A"
-        n_str = f"{data['no_pref_ratio']:.1%}" if data['no_pref_ratio'] is not None else "N/A"
-        b_str = f"{data['b_pref_ratio']:.1%}" if data['b_pref_ratio'] is not None else "N/A"
+        a_str  = f"{data['a_pref_ratio']:.1%}" if data['a_pref_ratio'] is not None else "N/A"
+        n_str  = f"{data['no_pref_ratio']:.1%}" if data['no_pref_ratio'] is not None else "N/A"
+        b_str  = f"{data['b_pref_ratio']:.1%}" if data['b_pref_ratio'] is not None else "N/A"
+        ci_str = (f"{(data['ci_high'] - data['ci_low']) / 2:.1%}"
+                  if data['ci_low'] is not None else "N/A")
+        s_str   = _p_cell(data['p_split_ties'])
+        sa_str  = _p_cell(data['p_split_ties_a_gt_b'])
 
-        print(f"{data['ref_system']:<22} {data['target_system']:<22} {a_str:>8} {n_str:>8} {b_str:>8} {data['n_samples']:>5}")
+        print(f"{data['ref_system']:<22} {data['target_system']:<22} {a_str:>8} {n_str:>8} {b_str:>8} "
+              f"{ci_str:>8} {data['n_samples']:>5} {s_str:>16} {sa_str:>16}")
 
 
 def plot_preference_results(pref_results, output_file='preference_plot.png'):
@@ -169,12 +221,24 @@ def plot_preference_results(pref_results, output_file='preference_plot.png'):
     }
     ref_display = {'Qwen3-TTS': 'Qwen3-TTS-VD'}
 
+    def _sig_superscript(p_b_gt_a, p_a_gt_b):
+        # Golden metric for significance: split-tie binomial test.
+        # '*' marks B significantly preferred over A; '+' marks A significantly preferred over B.
+        marks = ''
+        if p_b_gt_a < 0.05:
+            marks += r'$^{*}$'
+        if p_a_gt_b < 0.05:
+            marks += r'$^{+}$'
+        return marks
+
     base, ext = os.path.splitext(output_file)
 
     for system_b, pairs in sorted_groups:
         pairs = sorted(pairs, key=lambda p: (p['ref_system'] == 'GroundTruth', p['ref_system']))
         n = len(pairs)
-        labels = [ref_display.get(p['ref_system'], p['ref_system']) for p in pairs]
+        labels = [ref_display.get(p['ref_system'], p['ref_system'])
+                  + _sig_superscript(p['p_split_ties'], p['p_split_ties_a_gt_b'])
+                  for p in pairs]
         wins   = [p['b_pref_ratio'] for p in pairs]
         ties   = [p['no_pref_ratio'] for p in pairs]
         losses = [p['a_pref_ratio'] for p in pairs]
@@ -199,7 +263,7 @@ def plot_preference_results(pref_results, output_file='preference_plot.png'):
                 ax.text(l + t + w / 2, j, f'{w:.0%}', ha='center', va='center', fontsize=11, color='white', fontweight='bold')
 
         ax.set_yticks(y)
-        ax.set_yticklabels(labels, fontsize=11)
+        ax.set_yticklabels(labels, fontsize=14)
         ax.set_ylim(-0.5, n - 0.5)
         ax.set_ylabel('Baselines', fontsize=10)
         ax.set_xlim(0, 1)
@@ -244,6 +308,12 @@ def save_preference_to_csv(pref_results, output_file='preference_results.csv'):
             'no_pref_ratio': data['no_pref_ratio'],
             'b_pref_ratio': data['b_pref_ratio'],
             'n_samples': data['n_samples'],
+            'p_split_ties_b_gt_a': data['p_split_ties'],
+            'sig_b_gt_a': significance_stars(data['p_split_ties']),
+            'p_split_ties_a_gt_b': data['p_split_ties_a_gt_b'],
+            'sig_a_gt_b': significance_stars(data['p_split_ties_a_gt_b']),
+            'ci_low': data['ci_low'],
+            'ci_high': data['ci_high'],
         })
 
     df = pd.DataFrame(rows)
@@ -324,12 +394,12 @@ def main(directory_path):
     save_preference_to_csv(pref_results, output_file=f"{directory_path}/preference_results.csv")
     plot_preference_results(pref_results, output_file=f"{directory_path}/preference_plot.pdf")
 
-    winning_utterances(
-        valid_results,
-        ref_system='GroundTruth',
-        target_system='F5TTS-DP-GRPO',
-        output_file=f"{directory_path}/winning_utterances_GRPO_vs_GT.csv",
-    )
+    # winning_utterances(
+    #     valid_results,
+    #     ref_system='GroundTruth',
+    #     target_system='F5TTS-DP-GRPO',
+    #     output_file=f"{directory_path}/winning_utterances_GRPO_vs_GT.csv",
+    # )
 
     return pref_results
 
