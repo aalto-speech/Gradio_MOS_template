@@ -167,24 +167,44 @@ class TTSLocalTestGenerator:
                 # Read the metalst file
                 with open(metalst_path, 'r', encoding='utf-8') as f:
                     lines = f.readlines()
-                
+
+                # Auto-detect metalst format from the first non-empty line:
+                #   4-field (pipe-separated): target_utt | target_text | prompt_utt | prompt_text
+                #   6-field (tab-separated):  ref_utt \t ... \t ... \t target_utt \t ... \t ...
+                metalst_format = '6field'
+                for first_line in lines:
+                    stripped = first_line.strip()
+                    if stripped:
+                        pipe_fields = stripped.split('|')
+                        metalst_format = '4field' if len(pipe_fields) == 4 else '6field'
+                        break
+                print(f"Detected metalst format: {metalst_format} for {metalst_path}")
+
                 pairs_generated = 0
                 for line_num, line in enumerate(lines):
                     if pairs_generated >= num_pairs:
                         break
-                    
+
                     line = line.strip()
                     if not line:  # Skip empty lines
                         continue
-                    
-                    # Split by tab
-                    fields = line.split('\t')
-                    if len(fields) < 4:
-                        print(f"Warning: Line {line_num} in {metalst_path} has fewer than 4 fields, skipping")
-                        continue
-                    
-                    ref_filename = os.path.splitext(os.path.basename(fields[0]))[0]
-                    target_filename = os.path.splitext(os.path.basename(fields[3]))[0]
+
+                    if metalst_format == '4field':
+                        # 4-field pipe-separated: target_utt | target_text | prompt_utt | prompt_text
+                        fields = [f.strip() for f in line.split('|')]
+                        if len(fields) < 4:
+                            print(f"Warning: Line {line_num} in {metalst_path} has fewer than 4 pipe-separated fields, skipping")
+                            continue
+                        target_filename = os.path.splitext(os.path.basename(fields[0]))[0]
+                        ref_filename = os.path.splitext(os.path.basename(fields[2]))[0]
+                    else:
+                        # 6-field tab-separated: ref_utt \t ... \t ... \t target_utt \t ... \t ...
+                        fields = line.split('\t')
+                        if len(fields) < 4:
+                            print(f"Warning: Line {line_num} in {metalst_path} has fewer than 4 tab-separated fields, skipping")
+                            continue
+                        ref_filename = os.path.splitext(os.path.basename(fields[0]))[0]
+                        target_filename = os.path.splitext(os.path.basename(fields[3]))[0]
                     
                     # Find the reference file
                     if ref_filename not in ref_files_dict:

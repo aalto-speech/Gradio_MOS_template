@@ -296,7 +296,7 @@ def analyze_per_utterance(results):
     
     return utterance_results
 
-def save_utterance_results_to_json(utterance_results, output_file='utterance_results.json'):
+def save_utterance_results_to_json(utterance_results, output_file='utterance_results.jsonl'):
     """Save per-utterance results to JSON file"""
     # Convert to the requested format
     results_list = []
@@ -347,7 +347,7 @@ def main(directory_path):
     # Analyze per utterance
     utterance_results = analyze_per_utterance(valid_results)
     utterance_json = save_utterance_results_to_json(utterance_results, 
-                                                   output_file=f"{directory_path}/utterance_results.json")
+                                                   output_file=f"{directory_path}/utterance_results.jsonl")
     
     return cmos_results, smos_results
 

@@ -59,18 +59,24 @@ class SMOSPage(TestPage):
     def get_instructions(self):
         return """
         ### Speaker Similarity Test (SMOS)
-        Please rate how similar the voice in the target audio is to the reference audio.
-        - Scale: 1-5 (1: Very Different, 5: Very Similar)
+        Please rate how similar the voice in sample B is to sample A.
+        - Scale: -2 to 2 (-2: not the same speaker, 2: definitely the same speaker)
         - The audios are recorded under various conditions, so please focus on the speaker's voice characteristics.
         - Please finish listening to both audios before submitting your score.
         - It's very important to trust your first impression and not overthink your answer.
         """
     
     def get_slider_config(self):
-        return 1, 5, 3  # min, max, default
+        return -2, 2, 0  # min, max, default
     
     def get_level_label(self):
-        return ["Very Different", "Different", "Slightly Different", "Similar", "Very Similar"]
+        return [
+            "They are not the same speaker.", 
+            "They probably are not the same speaker.",
+            "I can't say", 
+            "They probably are the same speaker.",
+            "They are the same speaker.", 
+        ]
 
 
 class SMOSInstructionPage(SMOSPage):
@@ -82,11 +88,11 @@ class SMOSInstructionPage(SMOSPage):
         **This is an instruction example where both audios are from the same speaker with different content.**
         
         Please rate how similar the voice in the target audio is to the reference audio.
-        - Scale: 1-5 (1: Very Different, 5: Very Similar)
+        - Scale: -2 to 2 (-2: definitely not the same speaker, 2: definitely the same speaker)
         - The audios are recorded under various conditions, so please focus on the speaker's voice characteristics.
         - Please finish listening to both audios before submitting your score.
         - It's very important to trust your first impression and not overthink your answer.
-        - **For this instruction example, you should give a score of 5 since it's the same speaker**
+        - **For this instruction example, you should give a score of 2 since it's the same speaker**
         """
 
 class NMOSPage(NoReferencePage):
@@ -206,8 +212,8 @@ class CMOSPage(TestPage):
         ### Comparative Mean Opinion Score Test (CMOS)
         Please compare how human-sounded of the sample B against the sample A.
         - Scale: -3 to +3
-        - Negative: Sample A is more human-sounded
-        - Positive: Sample B is more human-sounded
+        - Negative: Sample A is more human-like
+        - Positive: Sample B is more human-like
         - 0: Equal quality
         
         Tips:
@@ -220,10 +226,15 @@ class CMOSPage(TestPage):
         return -3, 3, 0
     
     def get_level_label(self):
-        return ["Sample A is much better", "Sample A is better",
-                "Sample A is slightly better", "Equal quality",
-                "Sample B is slightly better", "Sample B is better",
-                "Sample B is much better"]
+        return [
+            "Sample A is much more human-like.", 
+            "Sample A is more human-like.",
+            "Sample A is slightly more human-like.", 
+            "Both samples are equal human-like.",
+            "Sample B is slightly more human-like.", 
+            "Sample B is more human-like.",
+            "Sample B is much more human-like."
+        ]
 
 
 class CMOSInstructionPage(CMOSPage):
@@ -234,8 +245,8 @@ class CMOSInstructionPage(CMOSPage):
         ### Comparative Mean Opinion Score Test (CMOS) - **Instruction**
         Please compare how human-sounded of the sample B against the sample A.
         - Scale: -3 to +3
-        - Negative: Sample A is more human-sounded
-        - Positive: Sample B is more human-sounded
+        - Negative: Sample A is more human-like
+        - Positive: Sample B is more human-like
         - 0: Equal quality
         - **For this instruction example, you should give a score of 0 since both are natural speech with equal quality**
 
@@ -245,6 +256,55 @@ class CMOSInstructionPage(CMOSPage):
         - It's very important to trust your first impression and not overthink your answer.
         """
 
+class EmphasisPreferencePage(TestPage):
+    def __init__(self, test_case):
+        super().__init__(test_case)
+        self.transcript = test_case.get("transcript", "")
+
+    def get_instructions(self):
+        return """
+        ### Emphasis Preference Test
+        Given the text, with the emphasized word wrapped in asterisk (*), please listen to sample A and B, and choose your preference over these two samples.
+
+        Use the following criteria to choose your preference:
+        1. The localization of the emphasis is accurate.
+        2. The sample matches the transcript.
+        3. You like the way how the words are emphasized.
+        
+        Tips:
+        - Two samples might belong to different speakers with different recording conditions and different speaking style.
+        - Please finish listening the given audio before submitting your score.
+        - It's very important to trust your first impression and not overthink your answer.
+        """
+    
+    def get_slider_config(self):
+        return -1, 1, 0
+    
+    def get_level_label(self):
+        return [
+            "Prefer sample A",
+            "No preference",
+            "Prefer sample B"
+        ]
+    
+class EmphasisPreferenceInstructionPage(EmphasisPreferencePage):
+    def get_instructions(self):
+        return """
+        ### Emphasis Preference Test - Instruction
+        Given the text, with the emphasized word wrapped in asterisk (*), please listen to sample A and B, and choose your preference over these two samples, in terms of the way they emphasize the selected word(s).
+
+        **This is an instruction question, and it will not count towards the final results.**
+
+        Use the following criteria to choose your preference:
+        1. The localization of the emphasis is accurate.
+        2. The sample matches the transcript.
+        3. You like the way how the words are emphasized.
+        
+        Tips:
+        - Two samples might belong to different speakers with different recording conditions and different speaking style.
+        - Please finish listening the given audio before submitting your score.
+        - It's very important to trust your first impression and not overthink your answer.
+        """
 
 class AttentionPage(CMOSPage):
     """Attention check page"""
@@ -252,13 +312,22 @@ class AttentionPage(CMOSPage):
     def get_instructions(self):
         return """
         ### Attention Check
-        Audio A and Audio B are identical, they are both instructions to you on how to rate this question.
-
         Please rate as the audio instructed.
         - Scale: -3 to 3
 
-        Even though the audios are identical, **please finish listening both audios before submit your answers.**
+        **Please finishing listen to both audio before submit your answers.**
         """
+    
+    def get_level_label(self):
+        return [
+            "Sample A is much better.", 
+            "Sample A is better.",
+            "Sample A is slightly better.", 
+            "Both samples are equally good.",
+            "Sample B is slightly better.", 
+            "Sample B is better.",
+            "Sample B is much better."
+        ]
 
 
 
@@ -358,6 +427,8 @@ class PageFactory:
         "QMOS": QMOSPage,
         "qmos_instruction": QMOSInstructionPage,
         "qmos_negative_instruction": QMOSNegativeInstructionPage,
+        "empha_pref": EmphasisPreferencePage,
+        "empha_pref_instruction": EmphasisPreferenceInstructionPage
     }
     
     @classmethod

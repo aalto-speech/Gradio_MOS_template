@@ -10,7 +10,9 @@ gradio:
   allowed_paths:
     - cwd
 
-attention_check:
+num_attention: 3
+
+attention_checks:
   - type: 'attention'
     reference: 'audios/attention_high.wav'
     target: 'audios/attention_high.wav'
